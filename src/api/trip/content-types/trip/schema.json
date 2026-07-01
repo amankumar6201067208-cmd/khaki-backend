@@ -1,0 +1,132 @@
+{
+  "kind": "collectionType",
+  "collectionName": "trips",
+  "info": {
+    "singularName": "trip",
+    "pluralName": "trips",
+    "displayName": "Walk/Tours Trip"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Title": {
+      "type": "string",
+      "required": true
+    },
+    "Slug": {
+      "type": "uid",
+      "targetField": "Title",
+      "required": true
+    },
+    "Duration": {
+      "type": "string"
+    },
+    "Distance": {
+      "type": "string"
+    },
+    "Price": {
+      "type": "biginteger"
+    },
+    "priceType": {
+      "type": "string"
+    },
+    "Tag": {
+      "type": "string"
+    },
+    "tripCategory": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Walking Tours",
+        "AC Vehicle Tours",
+        "Open Vehicle Tours",
+        "eVictoria rides",
+        "Food Tours",
+        "Boat Tours",
+        "Day Tours",
+        "Group Tours"
+      ]
+    },
+    "tripType": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Group Tour",
+        "Private Tour"
+      ]
+    },
+    "publishDate": {
+      "type": "date"
+    },
+    "Description": {
+      "type": "blocks"
+    },
+    "Note": {
+      "type": "blocks"
+    },
+    "featureImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "Images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "highlight": {
+      "type": "component",
+      "component": "trip.highlight",
+      "repeatable": true
+    },
+    "startingPoint": {
+      "type": "component",
+      "component": "trip.starting-point",
+      "repeatable": false
+    },
+    "GroupTourBookingDetails": {
+      "type": "dynamiczone",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "tripType"
+            },
+            "Group Tour"
+          ]
+        }
+      },
+      "components": [
+        "trip.schedule"
+      ]
+    },
+    "BookingSlots": {
+      "type": "dynamiczone",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "tripType"
+            },
+            "Private Tour"
+          ]
+        }
+      },
+      "components": [
+        "private-tours.booking-form-details"
+      ]
+    }
+  }
+}

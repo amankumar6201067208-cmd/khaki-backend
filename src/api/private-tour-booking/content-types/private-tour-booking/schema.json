@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "private_tour_bookings",
+  "info": {
+    "singularName": "private-tour-booking",
+    "pluralName": "private-tour-bookings",
+    "displayName": "Private Tour Booking"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "tourName": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "preferredDate": {
+      "type": "date"
+    },
+    "people": {
+      "type": "integer"
+    },
+    "otherRequest": {
+      "type": "text"
+    },
+    "totalAmount": {
+      "type": "biginteger"
+    },
+    "title": {
+      "type": "string"
+    },
+    "countryCode": {
+      "type": "string"
+    },
+    "startTime": {
+      "type": "string"
+    },
+    "endTime": {
+      "type": "string"
+    },
+    "acceptedTerms": {
+      "type": "string"
+    }
+  }
+}

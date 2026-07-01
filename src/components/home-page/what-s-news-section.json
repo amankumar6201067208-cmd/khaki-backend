@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_home_page_what_s_news_sections",
+  "info": {
+    "displayName": "What's News Section"
+  },
+  "options": {},
+  "attributes": {
+    "Heading": {
+      "type": "blocks",
+      "required": false
+    },
+    "Paragraph": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "ButtonText": {
+      "type": "string"
+    },
+    "ButtonURL": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

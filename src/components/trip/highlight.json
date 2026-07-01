@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_trip_highlights",
+  "info": {
+    "displayName": "highlight"
+  },
+  "options": {},
+  "attributes": {
+    "Text": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

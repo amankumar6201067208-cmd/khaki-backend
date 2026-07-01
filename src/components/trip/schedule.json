@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_trip_schedules",
+  "info": {
+    "displayName": "schedule"
+  },
+  "options": {},
+  "attributes": {
+    "Date": {
+      "type": "date"
+    },
+    "Slots": {
+      "type": "component",
+      "component": "trip.slots",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

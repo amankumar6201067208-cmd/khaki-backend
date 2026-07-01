@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bookings",
+  "info": {
+    "singularName": "booking",
+    "pluralName": "bookings",
+    "displayName": "Group Tour Booking"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "bookingId": {
+      "type": "uid"
+    },
+    "tourSlug": {
+      "type": "string"
+    },
+    "date": {
+      "type": "date"
+    },
+    "slot": {
+      "type": "string"
+    },
+    "tickets": {
+      "type": "integer"
+    },
+    "totalAmount": {
+      "type": "biginteger"
+    },
+    "Bookingstatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "paid",
+        "failed"
+      ]
+    },
+    "contactName": {
+      "type": "string"
+    },
+    "contactEmail": {
+      "type": "email"
+    },
+    "contactPhone": {
+      "type": "string"
+    },
+    "passengers": {
+      "type": "json"
+    },
+    "tourTitle": {
+      "type": "string"
+    },
+    "startingPoint": {
+      "type": "string"
+    }
+  }
+}

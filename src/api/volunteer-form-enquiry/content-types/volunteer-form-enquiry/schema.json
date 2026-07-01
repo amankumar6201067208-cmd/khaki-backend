@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "volunteer_form_enquiries",
+  "info": {
+    "singularName": "volunteer-form-enquiry",
+    "pluralName": "volunteer-form-enquiries",
+    "displayName": "Volunteer Form Enquiry"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string"
+    },
+    "age": {
+      "type": "string"
+    },
+    "education": {
+      "type": "string"
+    },
+    "profession": {
+      "type": "string"
+    },
+    "about": {
+      "type": "text"
+    }
+  }
+}

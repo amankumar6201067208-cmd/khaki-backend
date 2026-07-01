@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_trip_slots",
+  "info": {
+    "displayName": "Slots"
+  },
+  "options": {},
+  "attributes": {
+    "Time": {
+      "type": "time"
+    },
+    "availableSeats": {
+      "type": "biginteger"
+    }
+  },
+  "config": {}
+}

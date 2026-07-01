@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "moduleResolution": "bundler",
+    "target": "ES2021",
+    "checkJs": true,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "jsx": "react",
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "config/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "build", "dist", ".cache"]
+}

@@ -1,0 +1,25 @@
+{
+  "kind": "singleType",
+  "collectionName": "home_pages",
+  "info": {
+    "singularName": "home-page",
+    "pluralName": "home-pages",
+    "displayName": "Home Page"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "WhatsNewSection": {
+      "type": "component",
+      "component": "home-page.what-s-news-section",
+      "repeatable": false
+    },
+    "InternationalImage": {
+      "type": "component",
+      "component": "home-page.international-image-section",
+      "repeatable": false
+    }
+  }
+}

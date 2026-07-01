@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_walk_event_trip_slots",
+  "info": {
+    "displayName": "Slots"
+  },
+  "options": {},
+  "attributes": {
+    "TourTime": {
+      "type": "time"
+    },
+    "availableTickets": {
+      "type": "biginteger"
+    },
+    "discountUsedCount": {
+      "type": "integer",
+      "default": 3,
+      "max": 3
+    }
+  },
+  "config": {}
+}

@@ -1,0 +1,104 @@
+{
+  "kind": "collectionType",
+  "collectionName": "public_walk_and_events",
+  "info": {
+    "singularName": "public-walk-and-event",
+    "pluralName": "public-walk-and-events",
+    "displayName": "Public Walk & Events"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Title": {
+      "type": "string",
+      "required": true
+    },
+    "Slug": {
+      "type": "uid",
+      "targetField": "Title",
+      "required": true
+    },
+    "Description": {
+      "type": "text"
+    },
+    "Note": {
+      "type": "text"
+    },
+    "TourType": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Public Walk",
+        "Public Event"
+      ]
+    },
+    "Duration": {
+      "type": "string",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "TourType"
+            },
+            "Public Walk"
+          ]
+        }
+      }
+    },
+    "Distance": {
+      "type": "string",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "TourType"
+            },
+            "Public Walk"
+          ]
+        }
+      }
+    },
+    "Price": {
+      "type": "biginteger"
+    },
+    "Highlights": {
+      "type": "component",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "TourType"
+            },
+            "Public Walk"
+          ]
+        }
+      },
+      "component": "trip.highlight",
+      "repeatable": true
+    },
+    "FeatureImages": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "BookingSlots": {
+      "type": "component",
+      "component": "walk-event-trip.booking-slots",
+      "repeatable": true
+    },
+    "StartingPoint": {
+      "type": "dynamiczone",
+      "components": [
+        "trip.starting-point"
+      ],
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_walk_event_trip_booking_slots",
+  "info": {
+    "displayName": "Booking Slots"
+  },
+  "options": {},
+  "attributes": {
+    "TourDate": {
+      "type": "date"
+    },
+    "Slots": {
+      "type": "component",
+      "component": "walk-event-trip.slots",
+      "repeatable": false
+    }
+  },
+  "config": {}
+}

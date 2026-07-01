@@ -1,0 +1,23 @@
+{
+  "name": "reports",
+  "version": "1.0.0",
+  "description": "Custom booking / donation report exports for the admin panel",
+  "strapi": {
+    "kind": "plugin",
+    "name": "reports",
+    "displayName": "Reports"
+  },
+  "exports": {
+    "./strapi-admin": {
+      "source": "./admin/src/index.js",
+      "import": "./admin/src/index.js",
+      "default": "./admin/src/index.js"
+    },
+    "./strapi-server": {
+      "source": "./server/index.js",
+      "import": "./server/index.js",
+      "require": "./server/index.js",
+      "default": "./server/index.js"
+    }
+  }
+}

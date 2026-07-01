@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_private_tours_person_pricings",
+  "info": {
+    "displayName": "person pricing"
+  },
+  "options": {},
+  "attributes": {
+    "People": {
+      "type": "biginteger"
+    },
+    "Price": {
+      "type": "biginteger"
+    }
+  },
+  "config": {}
+}

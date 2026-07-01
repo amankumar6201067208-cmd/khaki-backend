@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "request_friend_forms",
+  "info": {
+    "singularName": "request-friend-form",
+    "pluralName": "request-friend-forms",
+    "displayName": "Request Friend Form"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "yourName": {
+      "type": "string"
+    },
+    "yourEmail": {
+      "type": "email"
+    },
+    "friendName": {
+      "type": "string"
+    },
+    "friendEmail": {
+      "type": "email"
+    },
+    "message": {
+      "type": "text"
+    }
+  }
+}

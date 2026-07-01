@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_private_tours_booking_slots",
+  "info": {
+    "displayName": "Booking Slots"
+  },
+  "options": {},
+  "attributes": {
+    "StartTime": {
+      "type": "time"
+    },
+    "EndTime": {
+      "type": "time"
+    }
+  },
+  "config": {}
+}

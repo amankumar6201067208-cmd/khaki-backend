@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_walk_event_trip_event_starting_points",
+  "info": {
+    "displayName": "Event Starting Points"
+  },
+  "options": {},
+  "attributes": {
+    "StartingPoint": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

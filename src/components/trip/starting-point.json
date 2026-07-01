@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_trip_starting_points",
+  "info": {
+    "displayName": "Starting Point"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "location_name": {
+      "type": "string"
+    },
+    "location_address": {
+      "type": "text"
+    }
+  },
+  "config": {}
+}

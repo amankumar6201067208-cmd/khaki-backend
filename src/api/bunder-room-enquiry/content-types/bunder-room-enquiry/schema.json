@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bunder_room_enquiries",
+  "info": {
+    "singularName": "bunder-room-enquiry",
+    "pluralName": "bunder-room-enquiries",
+    "displayName": "Bunder Room Enquiry"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "organization": {
+      "type": "string"
+    },
+    "bookingDate": {
+      "type": "date"
+    },
+    "timing": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "string"
+    },
+    "comments": {
+      "type": "text"
+    }
+  }
+}

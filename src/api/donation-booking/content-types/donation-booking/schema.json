@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "donation_bookings",
+  "info": {
+    "singularName": "donation-booking",
+    "pluralName": "donation-bookings",
+    "displayName": "Donation Booking"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "donationId": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "text"
+    },
+    "pan": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "biginteger"
+    },
+    "comments": {
+      "type": "text"
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "paid",
+        "failed"
+      ]
+    }
+  }
+}

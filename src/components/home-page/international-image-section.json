@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_home_page_international_image_sections",
+  "info": {
+    "displayName": "International Image Section"
+  },
+  "options": {},
+  "attributes": {
+    "InternationalImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "InternationalImageURL": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "public_event_bookings",
+  "info": {
+    "singularName": "public-event-booking",
+    "pluralName": "public-event-bookings",
+    "displayName": "Public Event Booking"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "bookingId": {
+      "type": "uid"
+    },
+    "tourSlug": {
+      "type": "string"
+    },
+    "date": {
+      "type": "date"
+    },
+    "slot": {
+      "type": "string"
+    },
+    "tickets": {
+      "type": "integer"
+    },
+    "totalAmount": {
+      "type": "biginteger"
+    },
+    "Bookingstatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "confirmed"
+      ]
+    },
+    "contactName": {
+      "type": "string"
+    },
+    "contactEmail": {
+      "type": "email"
+    },
+    "contactPhone": {
+      "type": "string"
+    },
+    "passengers": {
+      "type": "json"
+    },
+    "tourTitle": {
+      "type": "string"
+    },
+    "startingPoint": {
+      "type": "string"
+    }
+  }
+}

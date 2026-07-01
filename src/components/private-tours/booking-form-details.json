@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_private_tours_booking_form_details",
+  "info": {
+    "displayName": "Booking Form Details"
+  },
+  "options": {},
+  "attributes": {
+    "TourDuraion": {
+      "type": "decimal",
+      "unique": false,
+      "min": 0
+    },
+    "BokingSlots": {
+      "type": "component",
+      "component": "private-tours.booking-slots",
+      "repeatable": true
+    },
+    "PersonPricing": {
+      "type": "component",
+      "component": "private-tours.person-pricing",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}
