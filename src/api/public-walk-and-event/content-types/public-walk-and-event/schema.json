@@ -21,7 +21,8 @@
       "required": true
     },
     "Description": {
-      "type": "text"
+      "type": "blocks",
+      "required": false
     },
     "Note": {
       "type": "text"

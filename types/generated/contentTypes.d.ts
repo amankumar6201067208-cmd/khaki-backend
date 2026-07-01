@@ -785,7 +785,7 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    Description: Schema.Attribute.Text;
+    Description: Schema.Attribute.Blocks;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
     FeatureImages: Schema.Attribute.Media<

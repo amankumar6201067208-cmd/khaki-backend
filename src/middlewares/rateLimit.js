@@ -2,6 +2,8 @@
 const SKIP_PATHS = [
   "/api/payment/success",
   "/api/payment/failure",
+  "/api/event-payment/success",
+  "/api/event-payment/failure",
   "/api/donation-payment/success",
   "/api/donation-payment/failure",
 ];
