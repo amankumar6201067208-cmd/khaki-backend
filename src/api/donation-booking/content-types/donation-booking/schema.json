@@ -30,7 +30,7 @@
       "type": "string"
     },
     "amount": {
-      "type": "biginteger"
+      "type": "decimal"
     },
     "comments": {
       "type": "text"

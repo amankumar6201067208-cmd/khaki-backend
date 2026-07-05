@@ -25,7 +25,7 @@
       "required": true
     },
     "excerpt": {
-      "type": "string",
+      "type": "text",
       "required": true
     },
     "featureImage": {

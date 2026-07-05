@@ -445,7 +445,7 @@ export interface ApiBlogBlog extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    excerpt: Schema.Attribute.String & Schema.Attribute.Required;
+    excerpt: Schema.Attribute.Text & Schema.Attribute.Required;
     featureImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     > &
@@ -494,7 +494,7 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
     slot: Schema.Attribute.String;
     startingPoint: Schema.Attribute.String;
     tickets: Schema.Attribute.Integer;
-    totalAmount: Schema.Attribute.BigInteger;
+    totalAmount: Schema.Attribute.Decimal;
     tourSlug: Schema.Attribute.String;
     tourTitle: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
@@ -585,7 +585,7 @@ export interface ApiDonationBookingDonationBooking
   };
   attributes: {
     address: Schema.Attribute.Text;
-    amount: Schema.Attribute.BigInteger;
+    amount: Schema.Attribute.Decimal;
     comments: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -678,7 +678,7 @@ export interface ApiPrivateTourBookingPrivateTourBooking
     publishedAt: Schema.Attribute.DateTime;
     startTime: Schema.Attribute.String;
     title: Schema.Attribute.String;
-    totalAmount: Schema.Attribute.BigInteger;
+    totalAmount: Schema.Attribute.Decimal;
     tourName: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -757,7 +757,7 @@ export interface ApiPublicEventBookingPublicEventBooking
     slot: Schema.Attribute.String;
     startingPoint: Schema.Attribute.String;
     tickets: Schema.Attribute.Integer;
-    totalAmount: Schema.Attribute.BigInteger;
+    totalAmount: Schema.Attribute.Decimal;
     tourSlug: Schema.Attribute.String;
     tourTitle: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
@@ -788,6 +788,7 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
     Description: Schema.Attribute.Blocks;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
+    EventType: Schema.Attribute.Enumeration<['Online', 'Ofline']>;
     FeatureImages: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
@@ -845,7 +846,7 @@ export interface ApiPublicWalkBookingPublicWalkBooking
     slot: Schema.Attribute.String;
     startingPoint: Schema.Attribute.String;
     tickets: Schema.Attribute.Integer;
-    totalAmount: Schema.Attribute.BigInteger;
+    totalAmount: Schema.Attribute.Decimal;
     tourSlug: Schema.Attribute.String;
     tourTitle: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;

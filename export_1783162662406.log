@@ -1,0 +1,2 @@
+[2026-07-04 16:27:42.440] error: [FATAL] [Data transfer] Error in assets read stream: ENOENT: no such file or directory, stat 'C:\Users\ShaGai\Desktop\khaki-tour\Khaki-Tour-Backend-master\public\uploads\daviddoe_strapi_742927360a.jpeg'
+[2026-07-04 16:27:42.441] error: [ERROR] ENOENT: no such file or directory, stat 'C:\Users\ShaGai\Desktop\khaki-tour\Khaki-Tour-Backend-master\public\uploads\daviddoe_strapi_742927360a.jpeg'

@@ -1,5 +1,42 @@
 # SQLite → PostgreSQL Migration Guide
 
+> ✅ **Local migration already done** (dev DB → local Postgres `khaki_tours`).
+> This guide + the notes below are what to repeat for staging/production.
+
+## Exact commands used (same-machine, data only)
+
+```bash
+# 1. Create the DB (psql or any client):  CREATE DATABASE khaki_tours;
+# 2. Export from SQLite (assets already live in public/uploads, so exclude them):
+DATABASE_CLIENT=sqlite npm run strapi -- export --no-encrypt --exclude files --file backup-db
+# 3. Point .env at Postgres (DATABASE_CLIENT=postgres + host/port/name/user/password)
+# 4. Import into the fresh Postgres DB:
+npm run strapi -- import --file backup-db.tar.gz --exclude files --force
+```
+
+## ⚠️ Gotchas we hit (already fixed in the schema)
+
+SQLite is loosely typed and silently accepted values Postgres rejects. Two
+column types had to change (done in the content-type schemas):
+
+1. **`blog.excerpt`: `string` → `text`** — an excerpt was 310 chars, but
+   `string` maps to Postgres `varchar(255)` → `value too long`.
+2. **All money fields (`totalAmount`, donation `amount`): `biginteger` →
+   `decimal`** — discounts produce fractional amounts (e.g. `449.25`), which
+   Postgres `bigint` rejects with `invalid input syntax for type bigint`. This
+   also would have broken booking creation at RUNTIME on Postgres, not just import.
+
+If you add new `string`/`integer` fields later, keep this in mind: long free
+text → `text`, anything that can be fractional → `decimal`.
+
+## ⚠️ Admin accounts are NOT transferred
+
+Strapi export/import excludes `admin::user` for security. After switching to
+Postgres you must **re-register the admin** at `http://localhost:1337/admin`
+(first-run screen). Content, bookings, media, and permissions all transfer.
+
+---
+
 The app ships with SQLite as the default (zero-config, good for local dev).
 For production with concurrent bookings, **switch to PostgreSQL**. SQLite allows
 only one writer at a time, so under concurrent payment confirmations it throws

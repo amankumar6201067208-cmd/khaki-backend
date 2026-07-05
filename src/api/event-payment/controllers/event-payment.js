@@ -180,19 +180,20 @@ module.exports = {
         );
       }
 
-      // 🛡️ IDEMPOTENCY GUARD — duplicate webhook must not re-run side effects.
-      if (eventBooking.Bookingstatus === "paid") {
+      // 🛡️ ATOMIC IDEMPOTENCY GUARD — flip to "paid" only if not already; only
+      // one duplicate/concurrent call wins and runs the email + seat reduction.
+      const { count } = await strapi.db
+        .query("api::public-event-booking.public-event-booking")
+        .updateMany({
+          where: { bookingId, Bookingstatus: { $ne: "paid" } },
+          data: { Bookingstatus: "paid" },
+        });
+
+      if (count === 0) {
         return ctx.redirect(
           `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${eventBooking.tourSlug}`,
         );
       }
-
-      await strapi.db
-        .query("api::public-event-booking.public-event-booking")
-        .update({
-          where: { bookingId },
-          data: { Bookingstatus: "paid" },
-        });
 
       // 📧 EMAIL (non-blocking)
       try {
@@ -208,6 +209,7 @@ module.exports = {
           }),
         });
       } catch (emailErr) {
+        // @ts-ignore
         console.error("⚠️ Event booking email failed:", emailErr.message);
       }
 

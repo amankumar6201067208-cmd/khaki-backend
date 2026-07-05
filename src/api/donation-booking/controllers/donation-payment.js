@@ -82,18 +82,20 @@ module.exports = {
         );
       }
 
-      // 🛡️ IDEMPOTENCY GUARD — duplicate webhook should not resend the email.
-      if (donation.paymentStatus === "paid") {
+      // 🛡️ ATOMIC IDEMPOTENCY GUARD — flip to "paid" only if not already, so
+      // duplicate webhooks / repeated "Simulate Success" clicks send one email.
+      const { count } = await strapi.db
+        .query("api::donation-booking.donation-booking")
+        .updateMany({
+          where: { donationId, paymentStatus: { $ne: "paid" } },
+          data: { paymentStatus: "paid" },
+        });
+
+      if (count === 0) {
         return ctx.redirect(
           `${frontendUrl}/thank-you?donationId=${donationId}&status=paid`,
         );
       }
-
-      // ✅ Update status
-      await strapi.db.query("api::donation-booking.donation-booking").update({
-        where: { donationId },
-        data: { paymentStatus: "paid" },
-      });
 
       // 📧 USER EMAIL (non-blocking — email failure must not break the flow)
       try {
@@ -103,6 +105,7 @@ module.exports = {
           html: userEmail(donation),
         });
       } catch (emailErr) {
+        // @ts-ignore
         console.error("⚠️ Donation email failed:", emailErr.message);
       }
 

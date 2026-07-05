@@ -89,19 +89,23 @@ module.exports = {
       });
 
       if (booking) {
-        // 🛡️ IDEMPOTENCY GUARD — PayU can fire the success webhook more than once.
-        // If this booking is already paid, do NOT reduce seats / resend email again.
-        if (booking.Bookingstatus === "paid") {
+        // 🛡️ ATOMIC IDEMPOTENCY GUARD — PayU can fire the success webhook many
+        // times (and users click "Simulate Success" repeatedly). This flips the
+        // status to "paid" ONLY if it isn't already, in a single atomic write.
+        // Exactly one concurrent/duplicate call gets count === 1 and proceeds to
+        // send the email + reduce seats; every other call gets 0 and bails out.
+        const { count } = await strapi.db
+          .query("api::booking.booking")
+          .updateMany({
+            where: { bookingId, Bookingstatus: { $ne: "paid" } },
+            data: { Bookingstatus: "paid" },
+          });
+
+        if (count === 0) {
           return ctx.redirect(
             `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${booking.tourSlug}`,
           );
         }
-
-        // ✅ Update booking status to paid
-        await strapi.db.query("api::booking.booking").update({
-          where: { bookingId },
-          data: { Bookingstatus: "paid" },
-        });
 
         // 📧 SEND EMAIL (non-blocking — email failure must not break the payment flow)
         try {
@@ -334,19 +338,19 @@ module.exports = {
         .findOne({ where: { bookingId } });
 
       if (eventBooking) {
-        // 🛡️ IDEMPOTENCY GUARD — skip if already processed (duplicate webhook).
-        if (eventBooking.Bookingstatus === "paid") {
+        // 🛡️ ATOMIC IDEMPOTENCY GUARD — only one duplicate call wins the flip.
+        const { count } = await strapi.db
+          .query("api::public-event-booking.public-event-booking")
+          .updateMany({
+            where: { bookingId, Bookingstatus: { $ne: "paid" } },
+            data: { Bookingstatus: "paid" },
+          });
+
+        if (count === 0) {
           return ctx.redirect(
             `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${eventBooking.tourSlug}`,
           );
         }
-
-        await strapi.db
-          .query("api::public-event-booking.public-event-booking")
-          .update({
-            where: { bookingId },
-            data: { Bookingstatus: "paid" },
-          });
 
         const fullEventBooking = await strapi.db
           .query("api::public-event-booking.public-event-booking")
@@ -395,20 +399,19 @@ module.exports = {
         .findOne({ where: { bookingId } });
 
       if (walkBooking) {
-        // 🛡️ IDEMPOTENCY GUARD — skip if already processed (duplicate webhook).
-        if (walkBooking.Bookingstatus === "paid") {
+        // 🛡️ ATOMIC IDEMPOTENCY GUARD — only one duplicate call wins the flip.
+        const { count } = await strapi.db
+          .query("api::public-walk-booking.public-walk-booking")
+          .updateMany({
+            where: { bookingId, Bookingstatus: { $ne: "paid" } },
+            data: { Bookingstatus: "paid" },
+          });
+
+        if (count === 0) {
           return ctx.redirect(
             `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${walkBooking.tourSlug}`,
           );
         }
-
-        // ✅ STATUS UPDATE
-        await strapi.db
-          .query("api::public-walk-booking.public-walk-booking")
-          .update({
-            where: { bookingId },
-            data: { Bookingstatus: "paid" },
-          });
 
         // 📧 EMAIL (non-blocking)
         try {

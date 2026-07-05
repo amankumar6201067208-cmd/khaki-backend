@@ -1,1 +1,10 @@
 node_modules
+
+# Strapi data transfer backups
+*.tar.gz
+exports/
+
+# Environment secrets
+.env
+.env.local
+.env.*.local

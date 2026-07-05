@@ -35,15 +35,32 @@
         "Public Event"
       ]
     },
-    "Duration": {
-      "type": "string",
+    "EventType": {
+      "type": "enumeration",
       "conditions": {
         "visible": {
           "==": [
             {
               "var": "TourType"
             },
-            "Public Walk"
+            "Public Event"
+          ]
+        }
+      },
+      "enum": [
+        "Online",
+        "Ofline"
+      ]
+    },
+    "Duration": {
+      "type": "string",
+      "conditions": {
+        "visible": {
+          "!=": [
+            {
+              "var": "EventType"
+            },
+            "Online"
           ]
         }
       }

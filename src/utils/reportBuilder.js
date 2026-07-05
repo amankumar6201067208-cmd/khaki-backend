@@ -178,6 +178,7 @@ async function buildReport(strapi, query) {
       const err = new Error(
         `Unknown type "${type}". Use: ${Object.keys(TYPES).join(", ")}, all.`,
       );
+      // @ts-ignore
       err.status = 400;
       throw err;
     }

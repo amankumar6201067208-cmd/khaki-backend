@@ -32,6 +32,7 @@ async function runWithLock(key, task) {
   try {
     return await task();
   } finally {
+    // @ts-ignore
     release();
     // Clean up the map if no one else queued behind us.
     if (locks.get(key) === previous.then(() => current)) {

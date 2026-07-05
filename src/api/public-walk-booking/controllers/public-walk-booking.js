@@ -48,13 +48,6 @@ module.exports = {
     }
   },
 
-  // =====================================================
-  // POST /api/public-walk-booking/calculate
-  //
-  // Submit se pehle frontend call karta hai
-  // Fresh DB se discountUsedCount fetch hota hai
-  // Taki stale frontend data pe depend na karna pade
-  // =====================================================
   async calculate(ctx) {
     try {
       const { tourSlug, date, slot, participants, pricePerPerson } =
