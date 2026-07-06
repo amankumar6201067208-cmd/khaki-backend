@@ -10,7 +10,7 @@
       "required": false
     },
     "Paragraph": {
-      "type": "text"
+      "type": "blocks"
     },
     "image": {
       "type": "media",

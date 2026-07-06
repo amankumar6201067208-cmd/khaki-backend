@@ -44,7 +44,7 @@ export interface HomePageWhatSNewsSection extends Struct.ComponentSchema {
     ButtonURL: Schema.Attribute.String;
     Heading: Schema.Attribute.Blocks;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
-    Paragraph: Schema.Attribute.Text;
+    Paragraph: Schema.Attribute.Blocks;
   };
 }
 
