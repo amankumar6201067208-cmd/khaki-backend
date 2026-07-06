@@ -1,26 +1,11 @@
 "use strict";
 
-/**
- * Dedicated PayU gateway for PUBLIC EVENT bookings.
- *
- * Public walks keep using the original gateway (/api/payment/*, PAYU_KEY/SALT).
- * Public events now use THIS gateway with a separate merchant account
- * (EVENT_PAYU_KEY / EVENT_PAYU_SALT) — same features: hash verification,
- * idempotency, confirmation email, and atomic seat reduction.
- *
- * The original /api/payment/success still contains an event branch for safety,
- * but new event payments flow through here, so nothing existing breaks.
- */
-
-const userEmail = require("../../../utils/eventUserEmail");
 const crypto = require("crypto");
 const { runWithLock } = require("../../../utils/asyncLock");
+const {
+  sendEventConfirmation,
+} = require("../../../utils/sendEventConfirmation");
 
-const BOOKING_ADMIN_EMAIL =
-  process.env.BOOKING_ADMIN_EMAIL || "amankumar6201067208@gmail.com";
-
-// Reduce available tickets for a public event slot (atomic read-modify-write).
-// Mirrors the walk/event reducer in payment.js so behaviour is identical.
 const reducePublicSeats = async (
   tourSlug,
   dateString,
@@ -97,17 +82,12 @@ const reducePublicSeats = async (
 };
 
 module.exports = {
-  // ===========================
   // CREATE EVENT PAYMENT
-  // ===========================
   async create(ctx) {
     try {
       const { amount, firstname, email, phone, productinfo, bookingId } =
         ctx.request.body;
-
-      // 🔥 SEPARATE PAYU ACCOUNT FOR EVENTS.
-      // Falls back to the original PAYU_KEY/SALT until the dedicated event
-      // credentials are set — so nothing breaks before they're configured.
+      //  SEPARATE PAYU ACCOUNT FOR EVENTS.
       const key = process.env.EVENT_PAYU_KEY || process.env.PAYU_KEY;
       const salt = process.env.EVENT_PAYU_SALT || process.env.PAYU_SALT;
       const payuBaseUrl = process.env.PAYU_BASE_URL;
@@ -137,9 +117,7 @@ module.exports = {
     }
   },
 
-  // ===========================
   // EVENT PAYMENT SUCCESS
-  // ===========================
   async success(ctx) {
     try {
       const {
@@ -159,7 +137,7 @@ module.exports = {
       const salt = process.env.EVENT_PAYU_SALT || process.env.PAYU_SALT;
       const frontendUrl = process.env.FRONTEND_URL;
 
-      // 🔐 HASH VERIFY (event merchant salt)
+      //  HASH VERIFY (event merchant salt)
       const reverseString = `${salt}|${status}||||||||||${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
       const calculatedHash = crypto
         .createHash("sha512")
@@ -180,7 +158,7 @@ module.exports = {
         );
       }
 
-      // 🛡️ ATOMIC IDEMPOTENCY GUARD — flip to "paid" only if not already; only
+      //  ATOMIC IDEMPOTENCY GUARD — flip to "paid" only if not already; only
       // one duplicate/concurrent call wins and runs the email + seat reduction.
       const { count } = await strapi.db
         .query("api::public-event-booking.public-event-booking")
@@ -195,28 +173,19 @@ module.exports = {
         );
       }
 
-      // 📧 EMAIL (non-blocking)
+      //  EMAIL from khakilab — picks Online (talk) vs Offline (event)
+      // template by the activity's EventType. Non-blocking.
       try {
-        await strapi.plugins["email"].services.email.send({
-          to: eventBooking.contactEmail,
-          bcc: [BOOKING_ADMIN_EMAIL],
-          subject: "Booking Confirmed",
-          html: userEmail({
-            ...eventBooking,
-            tourTitle: eventBooking.tourTitle,
-            startingPoint: eventBooking.startingPoint,
-            txnid: txnid,
-          }),
-        });
+        await sendEventConfirmation(strapi, eventBooking);
       } catch (emailErr) {
         // @ts-ignore
-        console.error("⚠️ Event booking email failed:", emailErr.message);
+        console.error(" Event booking email failed:", emailErr.message);
       }
 
       const ticketsToReduce = Number(
         eventBooking.totalParticipants || eventBooking.tickets || 1,
       );
-      // 🔒 Same lock key as walk so event + walk can't oversell the same slot.
+      // Same lock key as walk so event + walk can't oversell the same slot.
       await runWithLock(`pubwalk:${eventBooking.tourSlug}`, () =>
         reducePublicSeats(
           eventBooking.tourSlug,
@@ -235,9 +204,7 @@ module.exports = {
     }
   },
 
-  // ===========================
   // EVENT PAYMENT FAILURE
-  // ===========================
   async failure(ctx) {
     try {
       const bookingId = ctx.request.body.udf1;

@@ -13,5 +13,12 @@
     "esModuleInterop": true
   },
   "include": ["src/**/*", "config/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "build", "dist", ".cache"]
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    ".cache",
+    "src/admin/**",
+    "src/plugins/**/admin/**"
+  ]
 }

@@ -8,6 +8,7 @@ module.exports = ({ strapi }) => ({
     try {
       report = await buildReport(strapi, ctx.query);
     } catch (err) {
+      // @ts-ignore
       return ctx.throw(err.status || 500, err.message);
     }
 

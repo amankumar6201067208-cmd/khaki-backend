@@ -1,18 +1,24 @@
-module.exports = (data) => {
-  return `
-    <div style="font-family: Arial; padding: 20px;">
-      <h2>Booking Request Received ✅</h2>
+const { buildEmail } = require("./emailBase");
 
-      <p>Hi ${data.name},</p>
-
-      <p>We have received your booking request. Our team will get back to you shortly.</p>
-
-      <p><b>Date:</b> ${data.bookingDate}</p>
-      <p><b>Timing:</b> ${data.timing}</p>
-      <p><b>Layout:</b> ${data.layout}</p>
-
-      <br/>
-      <p>Regards,<br/>Khaki Tours Team</p>
-    </div>
-  `;
-};
+// Bunder Room booking-request confirmation (sent from khakilabevents@gmail.com).
+module.exports = (data = {}) =>
+  buildEmail({
+    greeting: `Dear ${data.name || ""}`.trim(),
+    intro: [
+      "Thank you for your interest in booking the Bunder Room at Khaki Lab.",
+      "Your booking request is as follows:",
+    ],
+    formRows: [
+      ["Name", data.name],
+      ["Email", data.email],
+      ["Phone", data.phone],
+      ["Organization", data.organization],
+      ["Booking Date", data.bookingDate],
+      ["Timing", data.timing],
+      ["Layout", data.layout],
+      ["Comments", data.comments],
+    ],
+    outro: [
+      "Our team is looking at the Bunder Room’s availability for your chosen time and date, and will contact you soon.",
+    ],
+  });

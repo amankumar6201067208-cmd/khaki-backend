@@ -15,7 +15,6 @@ module.exports = (config, { strapi }) => {
   /** @type {Map<string, { count: number, resetAt: number }>} */
   const hits = new Map();
 
-  // Periodically drop expired buckets so the map can't grow unbounded.
   const sweep = setInterval(() => {
     const now = Date.now();
     for (const [ip, bucket] of hits) {

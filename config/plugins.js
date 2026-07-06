@@ -22,20 +22,23 @@ module.exports = ({ env }) => ({
       }
     : {}),
 
+  // Strapi's built-in email plugin — used for ADMIN system emails (e.g. admin
+  // password reset). Points at the khakilab account. Booking/form confirmation
+  // emails do NOT use this; they go through src/utils/mailer.js (two accounts).
   email: {
     config: {
       provider: "@strapi/provider-email-nodemailer",
       providerOptions: {
-        host: "smtp.gmail.com",
-        port: 587,
+        host: env("KHAKILAB_EMAIL_HOST", "smtp.gmail.com"),
+        port: env.int("KHAKILAB_EMAIL_PORT", 587),
         auth: {
-          user: env("EMAIL_USERNAME"),
-          pass: env("EMAIL_PASSWORD"),
+          user: env("KHAKILAB_EMAIL_USER"),
+          pass: env("KHAKILAB_EMAIL_PASS"),
         },
       },
       settings: {
-        defaultFrom: env("EMAIL_USERNAME"),
-        defaultReplyTo: env("EMAIL_USERNAME"),
+        defaultFrom: env("KHAKILAB_EMAIL_USER"),
+        defaultReplyTo: env("KHAKILAB_EMAIL_USER"),
       },
     },
   },

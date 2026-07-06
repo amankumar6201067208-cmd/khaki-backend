@@ -32,7 +32,7 @@ module.exports = {
         }
       );
 
-      // ✅ FREE EVENT → direct confirm + seat reduce
+      // FREE EVENT → direct confirm + seat reduce
       if (isFree) {
         console.log("FREE BOOKING CONFIRMED");
       }
@@ -61,7 +61,7 @@ module.exports = {
       const normalizedSlotTime = normalizeTime(slot);
       const bookingDate = new Date(date).toDateString();
 
-      // ✅ Fresh fetch — hamesha latest discountUsedCount milega
+      // Fresh fetch — hamesha latest discountUsedCount milega
       const activities = await strapi
         .documents("api::public-walk-and-event.public-walk-and-event")
         .findMany({
@@ -87,7 +87,7 @@ module.exports = {
             normalizeTime(matchingSchedule.Slots.TourTime) === normalizedSlotTime;
 
           if (isMatchingSlot) {
-            // 🔑 Fresh value from DB — refresh karo ya na karo, sahi milega
+            //  Fresh value from DB — refresh karo ya na karo, sahi milega
             currentDiscountUsed = Number(matchingSchedule.Slots.discountUsedCount || 0);
           }
         }
@@ -111,7 +111,7 @@ module.exports = {
       }
 
       console.log(
-        `💰 Calculate: slug=${tourSlug}, discountUsed=${currentDiscountUsed}, remaining=${maxDiscount - currentDiscountUsed}, total=₹${totalAmount}`
+        ` Calculate: slug=${tourSlug}, discountUsed=${currentDiscountUsed}, remaining=${maxDiscount - currentDiscountUsed}, total=₹${totalAmount}`
       );
 
       // remainingDiscountQuota frontend ko bhejo — UI real-time quota dikhayega

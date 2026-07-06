@@ -1,35 +1,31 @@
 const userEmail = require("../../../../utils/requestUserEmail");
 const friendEmail = require("../../../../utils/requestFriendEmail");
-const adminEmail = require("../../../../utils/requestAdminEmail");
+const { sendMail } = require("../../../../utils/mailer");
 
 module.exports = {
   async afterCreate(event) {
     const { result } = event;
 
+    // Both go from khakilabevents@gmail.com. Each wrapped so one failure
+    // doesn't stop the other or break the form submission.
     try {
-      // ✅ 1. USER EMAIL
-      await strapi.plugins["email"].services.email.send({
+      await sendMail("khakilab", {
         to: result.yourEmail,
-        subject: "Your message has been sent ✅",
+        subject: "Thank You for Spreading the Word about Khaki Heritage Foundation",
         html: userEmail(result),
       });
+    } catch (err) {
+      strapi.log.error(`Request-a-friend (user) email failed: ${err.message}`);
+    }
 
-      // ✅ 2. FRIEND EMAIL (MAIN)
-      await strapi.plugins["email"].services.email.send({
+    try {
+      await sendMail("khakilab", {
         to: result.friendEmail,
         subject: "A message from your friend 💌",
         html: friendEmail(result),
       });
-
-      // ✅ 3. ADMIN EMAIL
-      await strapi.plugins["email"].services.email.send({
-        to: "amanpersonal94710@gmail.com",
-        subject: "New Friend Request 🚀",
-        html: adminEmail(result),
-      });
-
     } catch (err) {
-      console.error("Email error:", err);
+      strapi.log.error(`Request-a-friend (friend) email failed: ${err.message}`);
     }
   },
 };

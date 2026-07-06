@@ -1,5 +1,3 @@
-// CORS origins come from the CORS_ORIGINS env var (comma-separated).
-// If unset (e.g. local dev), fall back to "*" so nothing breaks.
 const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
   : ["*"];

@@ -82,7 +82,7 @@ const App = () => {
 
       setMessage({
         type: "success",
-        text: `Report downloaded ✅ (${rowCount} rows)`,
+        text: `Report downloaded (${rowCount} rows)`,
       });
     } catch (err) {
       setMessage({

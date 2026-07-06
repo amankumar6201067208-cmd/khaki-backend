@@ -1,13 +1,5 @@
 "use strict";
 
-/**
- * Shared report-building logic used by both the public token-protected API
- * (`src/api/report`) and the admin-authenticated Reports plugin
- * (`src/plugins/reports`). Keeping it here avoids duplicating the query +
- * CSV logic in two places.
- */
-
-// Per-report configuration: which model, which fields mean what, CSV columns.
 const TYPES = {
   group: {
     model: "api::booking.booking",
@@ -16,9 +8,20 @@ const TYPES = {
     statusField: "Bookingstatus",
     tourFields: ["tourSlug", "tourTitle"],
     columns: [
-      "bookingId", "tourTitle", "tourSlug", "date", "slot", "tickets",
-      "totalAmount", "Bookingstatus", "contactName", "contactEmail",
-      "contactPhone", "startingPoint", "passengers", "createdAt",
+      "bookingId",
+      "tourTitle",
+      "tourSlug",
+      "date",
+      "slot",
+      "tickets",
+      "totalAmount",
+      "Bookingstatus",
+      "contactName",
+      "contactEmail",
+      "contactPhone",
+      "startingPoint",
+      "passengers",
+      "createdAt",
     ],
   },
   walk: {
@@ -28,9 +31,20 @@ const TYPES = {
     statusField: "Bookingstatus",
     tourFields: ["tourSlug", "tourTitle"],
     columns: [
-      "bookingId", "tourTitle", "tourSlug", "date", "slot", "tickets",
-      "totalAmount", "Bookingstatus", "contactName", "contactEmail",
-      "contactPhone", "startingPoint", "passengers", "createdAt",
+      "bookingId",
+      "tourTitle",
+      "tourSlug",
+      "date",
+      "slot",
+      "tickets",
+      "totalAmount",
+      "Bookingstatus",
+      "contactName",
+      "contactEmail",
+      "contactPhone",
+      "startingPoint",
+      "passengers",
+      "createdAt",
     ],
   },
   event: {
@@ -40,9 +54,20 @@ const TYPES = {
     statusField: "Bookingstatus",
     tourFields: ["tourSlug", "tourTitle"],
     columns: [
-      "bookingId", "tourTitle", "tourSlug", "date", "slot", "tickets",
-      "totalAmount", "Bookingstatus", "contactName", "contactEmail",
-      "contactPhone", "startingPoint", "passengers", "createdAt",
+      "bookingId",
+      "tourTitle",
+      "tourSlug",
+      "date",
+      "slot",
+      "tickets",
+      "totalAmount",
+      "Bookingstatus",
+      "contactName",
+      "contactEmail",
+      "contactPhone",
+      "startingPoint",
+      "passengers",
+      "createdAt",
     ],
   },
   donation: {
@@ -52,8 +77,16 @@ const TYPES = {
     statusField: "paymentStatus",
     tourFields: [],
     columns: [
-      "donationId", "name", "email", "phone", "address", "pan", "amount",
-      "paymentStatus", "comments", "createdAt",
+      "donationId",
+      "name",
+      "email",
+      "phone",
+      "address",
+      "pan",
+      "amount",
+      "paymentStatus",
+      "comments",
+      "createdAt",
     ],
   },
   private: {
@@ -63,9 +96,21 @@ const TYPES = {
     statusField: null,
     tourFields: ["tourName", "title"],
     columns: [
-      "title", "tourName", "name", "email", "phone", "countryCode", "country",
-      "preferredDate", "startTime", "endTime", "people", "totalAmount",
-      "otherRequest", "acceptedTerms", "createdAt",
+      "title",
+      "tourName",
+      "name",
+      "email",
+      "phone",
+      "countryCode",
+      "country",
+      "preferredDate",
+      "startTime",
+      "endTime",
+      "people",
+      "totalAmount",
+      "otherRequest",
+      "acceptedTerms",
+      "createdAt",
     ],
   },
 };
@@ -93,7 +138,10 @@ function toCsv(rows, columns) {
 }
 
 /** Build Strapi filters for a single report type from the query params. */
-function buildFilters(typeConfig, { tour, status, dateFrom, dateTo, dateField }) {
+function buildFilters(
+  typeConfig,
+  { tour, status, dateFrom, dateTo, dateField },
+) {
   const filters = {};
   const and = [];
 

@@ -24,9 +24,6 @@ export default {
       name: PLUGIN_ID,
     });
 
-    // Inject a "Report" button into every collection list-view toolbar (next to
-    // Export / Import). It only renders on the supported booking/donation
-    // collections; elsewhere it shows nothing.
     app
       .getPlugin("content-manager")
       .injectComponent("listView", "actions", {

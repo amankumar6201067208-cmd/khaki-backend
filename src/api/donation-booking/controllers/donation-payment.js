@@ -1,4 +1,5 @@
 const userEmail = require("../../../utils/donationUserEmail");
+const { sendMail } = require("../../../utils/mailer");
 
 ("use strict");
 const crypto = require("crypto");
@@ -8,7 +9,7 @@ module.exports = {
     try {
       const { amount, name, email, phone, donationId } = ctx.request.body;
 
-      // 🔥 DIFFERENT PAYU ACCOUNT
+      // DIFFERENT PAYU ACCOUNT
       const key = process.env.DONATION_PAYU_KEY;
       const salt = process.env.DONATION_PAYU_SALT;
       const payuBaseUrl = process.env.PAYU_BASE_URL;
@@ -55,10 +56,6 @@ module.exports = {
       const donationId = udf1;
       const salt = process.env.DONATION_PAYU_SALT;
       const frontendUrl = process.env.FRONTEND_URL;
-
-      // 🔐 HASH VERIFY — never trust the POST body without confirming PayU's
-      // signature, otherwise anyone could mark a donation "paid" by hitting
-      // this public endpoint directly.
       const reverseString = `${salt}|${status}||||||||||${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
       const calculatedHash = crypto
         .createHash("sha512")
@@ -69,7 +66,7 @@ module.exports = {
         return ctx.redirect(`${frontendUrl}/failed?error=hash_mismatch`);
       }
 
-      // ✅ Fetch donation data
+      //  Fetch donation data
       const donation = await strapi.db
         .query("api::donation-booking.donation-booking")
         .findOne({
@@ -82,8 +79,6 @@ module.exports = {
         );
       }
 
-      // 🛡️ ATOMIC IDEMPOTENCY GUARD — flip to "paid" only if not already, so
-      // duplicate webhooks / repeated "Simulate Success" clicks send one email.
       const { count } = await strapi.db
         .query("api::donation-booking.donation-booking")
         .updateMany({
@@ -97,16 +92,16 @@ module.exports = {
         );
       }
 
-      // 📧 USER EMAIL (non-blocking — email failure must not break the flow)
+      //  USER EMAIL from khakilabevents@gmail.com (non-blocking).
       try {
-        await strapi.plugins["email"].services.email.send({
+        await sendMail("khakilab", {
           to: donation.email,
-          subject: "Donation Successful ❤️",
+          subject: "Thank You for Your Donation to Khaki Heritage Foundation",
           html: userEmail(donation),
         });
       } catch (emailErr) {
         // @ts-ignore
-        console.error("⚠️ Donation email failed:", emailErr.message);
+        console.error(" Donation email failed:", emailErr.message);
       }
 
       return ctx.redirect(

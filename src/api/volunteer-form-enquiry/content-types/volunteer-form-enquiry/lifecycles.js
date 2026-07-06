@@ -1,27 +1,19 @@
 const userEmail = require("../../../../utils/volunteerUserEmail");
-const adminEmail = require("../../../../utils/volunteerAdminEmail");
+const { sendMail } = require("../../../../utils/mailer");
 
 module.exports = {
   async afterCreate(event) {
     const { result } = event;
 
     try {
-      // User email
-      await strapi.plugins["email"].services.email.send({
+      await sendMail("khakilab", {
         to: result.email,
-        subject: "Volunteer Request Received ",
+        subject:
+          "Thank You for Your Interest in Volunteering with Khaki Heritage Foundation",
         html: userEmail(result),
       });
-
-      // Admin email
-      await strapi.plugins["email"].services.email.send({
-        to: "amanpersonal94710@gmail.com",
-        subject: "New Volunteer Request ",
-        html: adminEmail(result),
-      });
-
     } catch (err) {
-      console.error("Email error:", err);
+      strapi.log.error(`Volunteer email failed: ${err.message}`);
     }
   },
 };

@@ -1,29 +1,19 @@
-const adminEmail = require("../../../../utils/expertiseAdminEmail");
 const userEmail = require("../../../../utils/expertiseUserEmail");
+const { sendMail } = require("../../../../utils/mailer");
 
 module.exports = {
   async afterCreate(event) {
     const { result } = event;
 
     try {
-      //  USER EMAIL
-      await strapi.plugins["email"].services.email.send({
+      await sendMail("khakilab", {
         to: result.email,
-        subject: "We received your message ",
+        subject:
+          "Your offer to volunteer your expertise for Khaki Heritage Foundation",
         html: userEmail(result),
       });
-
-      //  ADMIN EMAIL
-      await strapi.plugins["email"].services.email.send({
-        to: "amanpersonal94710@gmail.com",
-        subject: "New Contact Form Submission",
-        html: adminEmail(result),
-      });
-
-      console.log("Contact emails sent ");
     } catch (err) {
-      console.error("Email error:", err);
+      strapi.log.error(`Provide-expertise email failed: ${err.message}`);
     }
   },
 };
-

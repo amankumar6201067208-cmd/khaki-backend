@@ -9,7 +9,7 @@ module.exports = {
       },
     },
 
-    // ✅ NEW — fresh totalAmount calculate karne ke liye
+    // NEW — fresh totalAmount calculate karne ke liye
     {
       method: "POST",
       path: "/public-walk-booking/calculate",

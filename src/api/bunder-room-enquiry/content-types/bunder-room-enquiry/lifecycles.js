@@ -1,27 +1,20 @@
 const userEmail = require("../../../../utils/bunderUserEmail");
-const adminEmail = require("../../../../utils/bunderAdminEmail");
+const { sendMail } = require("../../../../utils/mailer");
 
 module.exports = {
   async afterCreate(event) {
     const { result } = event;
 
+    // Confirmation from khakilabevents@gmail.com. Email failure must not break
+    // the form submission.
     try {
-      // User email
-      await strapi.plugins["email"].services.email.send({
+      await sendMail("khakilab", {
         to: result.email,
-        subject: "Room Booking Request Received ✅",
+        subject: "Re: Your Bunder Room Booking Request",
         html: userEmail(result),
       });
-
-      // Admin email
-      await strapi.plugins["email"].services.email.send({
-        to: "amanpersonal94710@gmail.com",
-        subject: "New Room Booking 🚀",
-        html: adminEmail(result),
-      });
-
     } catch (err) {
-      console.error("Email error:", err);
+      strapi.log.error(`Bunder room email failed: ${err.message}`);
     }
   },
 };

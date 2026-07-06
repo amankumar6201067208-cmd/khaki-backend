@@ -1,20 +1,22 @@
-module.exports = (data) => {
-  return `
-    <div style="font-family: Arial; padding: 20px;">
-      <h2>Donation Successful ❤️</h2>
+const { buildEmail } = require("./emailBase");
 
-      <p>Hi ${data.name},</p>
-
-      <p>Thank you for your generous contribution.</p>
-
-      <p><b>Donation ID:</b> ${data.donationId}</p>
-      <p><b>Amount:</b> ₹ ${data.amount}</p>
-
-      <br/>
-      <p>Your support helps us preserve heritage and make a difference.</p>
-
-      <br/>
-      <p>Regards,<br/>Khaki Foundation Team</p>
-    </div>
-  `;
+// Donation confirmation (sent from khakilabevents@gmail.com).
+module.exports = (data = {}) => {
+  const firstName = (data.name || "").trim().split(/\s+/)[0] || "";
+  return buildEmail({
+    greeting: `Dear ${firstName}`.trim(),
+    intro: ["Thank you for supporting our work with a donation."],
+    formRows: [
+      ["Name", data.name],
+      ["Email", data.email],
+      ["Phone", data.phone],
+      ["Address", data.address],
+      ["PAN", data.pan],
+      ["Amount", data.amount ? `₹ ${data.amount}` : ""],
+    ],
+    outro: [
+      "Your contribution will go a long way in helping us create awareness for, archive and conserve Mumbai’s heritage.",
+      "We will be sending across the 80G certificate soon.",
+    ],
+  });
 };

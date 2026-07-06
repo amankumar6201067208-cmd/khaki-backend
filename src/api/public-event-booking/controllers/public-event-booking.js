@@ -1,19 +1,14 @@
 "use strict";
 
-const userEmail = require("../../../utils/eventUserEmail");
+const {
+  sendEventConfirmation,
+} = require("../../../utils/sendEventConfirmation");
 
-// BCC copy of booking confirmations — configurable, with a safe fallback.
-const BOOKING_ADMIN_EMAIL =
-  process.env.BOOKING_ADMIN_EMAIL || "amankumar6201067208@gmail.com";
-
-// ===================================================
-// 🔁 COMMON FUNCTION: REDUCE PUBLIC EVENT SEATS
-// ===================================================
 const reducePublicSeats = async (
   tourSlug,
   dateString,
   slotTime,
-  ticketsToReduce
+  ticketsToReduce,
 ) => {
   if (!tourSlug) return;
 
@@ -36,7 +31,7 @@ const reducePublicSeats = async (
     const bookingDate = new Date(dateString).toDateString();
 
     const updatedBookingSlots = activity.BookingSlots.map((component) => {
-      // 🔸 If date not match → keep same
+      // If date not match → keep same
       if (new Date(component.TourDate).toDateString() !== bookingDate) {
         return {
           __component: "walk-event-trip.booking-slots",
@@ -50,7 +45,7 @@ const reducePublicSeats = async (
         };
       }
 
-      // 🔸 If slot match → reduce seats
+      // If slot match → reduce seats
       if (
         component.Slots &&
         normalizeTime(component.Slots.TourTime) === normalizedSlotTime
@@ -58,9 +53,7 @@ const reducePublicSeats = async (
         const currentSeats = Number(component.Slots.availableTickets);
         const newSeats = Math.max(0, currentSeats - ticketsToReduce);
 
-        console.log(
-          `✅ Free booking seat reduce: ${currentSeats} → ${newSeats}`
-        );
+        console.log(` Free booking seat reduce: ${currentSeats} → ${newSeats}`);
 
         return {
           __component: "walk-event-trip.booking-slots",
@@ -72,7 +65,7 @@ const reducePublicSeats = async (
         };
       }
 
-      // 🔸 Default return
+      // Default return
       return {
         __component: "walk-event-trip.booking-slots",
         TourDate: component.TourDate,
@@ -85,7 +78,7 @@ const reducePublicSeats = async (
       };
     });
 
-    // ✅ Update + Publish
+    //  Update + Publish
     await strapi
       .documents("api::public-walk-and-event.public-walk-and-event")
       .update({
@@ -102,15 +95,13 @@ const reducePublicSeats = async (
         documentId: activity.documentId,
       });
 
-    console.log("✅ Free booking seats updated & published");
+    console.log(" Free booking seats updated & published");
   } else {
-    console.warn("⚠️ No activity found for slug:", tourSlug);
+    console.warn(" No activity found for slug:", tourSlug);
   }
 };
 
-// ===================================================
-// 🚀 CONTROLLER
-// ===================================================
+// CONTROLLER
 module.exports = {
   async create(ctx) {
     try {
@@ -119,9 +110,8 @@ module.exports = {
       const bookingId = "PEB" + Date.now();
       const isFree = Number(data.totalAmount) === 0;
 
-      // ===================================================
-      // 🟢 CREATE BOOKING
-      // ===================================================
+      // CREATE BOOKING
+
       const booking = await strapi.entityService.create(
         "api::public-event-booking.public-event-booking",
         {
@@ -139,66 +129,47 @@ module.exports = {
             contactPhone: data.contact.phone,
             passengers: data.passengers,
 
-            // ✅ FREE → confirmed | PAID → pending
+            // FREE → confirmed | PAID → pending
             Bookingstatus: isFree ? "confirmed" : "pending",
           },
-        }
+        },
       );
 
-      // ===================================================
-      // 🟢 FREE BOOKING FLOW
-      // ===================================================
+      // FREE BOOKING FLOW
+
       if (isFree) {
         try {
-          console.log("✅ FREE BOOKING CONFIRMED");
+          console.log(" FREE BOOKING CONFIRMED");
 
-          // 📧 EMAIL DATA
-          const emailData = {
-            ...booking,
-            contactName: booking.contactName,
-            tourTitle: data.tourTitle || data.tourSlug,
-            startingPoint: data.startingPoint || "N/A",
-            txnid: booking.bookingId,
-          };
+          //  Confirmation from khakilab (Online talk vs Offline event template).
+          await sendEventConfirmation(strapi, booking);
 
-          // 📧 SEND EMAIL
-          await strapi.plugins["email"].services.email.send({
-            to: booking.contactEmail,
-            bcc: [BOOKING_ADMIN_EMAIL],
-            subject: `Booking Confirmed`,
-            html: userEmail(emailData),
-          });
+          console.log(" Free booking email sent");
 
-          console.log("📧 Free booking email sent");
-
-          // 🎟️ REDUCE SEATS
+          //  REDUCE SEATS
           const ticketsToReduce = Number(
-            booking.totalParticipants || booking.tickets || 1
+            booking.totalParticipants || booking.tickets || 1,
           );
 
           await reducePublicSeats(
             booking.tourSlug,
             booking.date,
             booking.slot,
-            ticketsToReduce
+            ticketsToReduce,
           );
-
         } catch (err) {
-          console.error("❌ Free booking flow error:", err);
+          console.error(" Free booking flow error:", err);
         }
       }
 
-      // ===================================================
-      // 📤 RESPONSE
-      // ===================================================
+      // RESPONSE
       ctx.send({
         bookingId: booking.bookingId,
         amount: booking.totalAmount,
         isFree,
       });
-
     } catch (error) {
-      console.error("❌ PUBLIC EVENT CREATE ERROR:", error);
+      console.error(" PUBLIC EVENT CREATE ERROR:", error);
       ctx.throw(500, error);
     }
   },

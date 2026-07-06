@@ -14,7 +14,7 @@ module.exports = {
         {
           data: {
             bookingId: "BK" + Date.now(),
-            tourSlug: data.tourSlug.toLowerCase(), // ✅ ensure lowercase
+            tourSlug: data.tourSlug.toLowerCase(), // ensure lowercase
             date: data.date,
             slot: data.slot,
             tickets: data.tickets,

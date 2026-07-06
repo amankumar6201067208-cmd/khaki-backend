@@ -3,8 +3,6 @@
 const locks = new Map();
 
 /**
- * Run `task` while holding the lock for `key`. Concurrent calls with the same
- * key run one-at-a-time, in arrival order. Different keys run in parallel.
  *
  * @template T
  * @param {string} key
