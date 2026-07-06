@@ -118,7 +118,7 @@ const ReportExportButton = () => {
       </Button>
 
       {open && (
-        <Modal.Root open={open} onClose={() => setOpen(false)}>
+        <Modal.Root open={open} onOpenChange={setOpen}>
           <Modal.Content>
             <Modal.Header>
               <Modal.Title>{LABELS[type]} — filtered export</Modal.Title>

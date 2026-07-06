@@ -1,7 +1,5 @@
 module.exports = ({ env }) => ({
-  // Media uploads. When Cloudinary credentials are set, files are stored on
-  // Cloudinary (persistent across deploys). Without them, Strapi falls back to
-  // the built-in local provider — so local dev keeps working with no setup.
+
   ...(env("CLOUDINARY_NAME")
     ? {
         upload: {
@@ -17,14 +15,12 @@ module.exports = ({ env }) => ({
               uploadStream: {},
               delete: {},
             },
+            breakpoints: {},
           },
         },
       }
     : {}),
 
-  // Strapi's built-in email plugin — used for ADMIN system emails (e.g. admin
-  // password reset). Points at the khakilab account. Booking/form confirmation
-  // emails do NOT use this; they go through src/utils/mailer.js (two accounts).
   email: {
     config: {
       provider: "@strapi/provider-email-nodemailer",
@@ -42,8 +38,7 @@ module.exports = ({ env }) => ({
       },
     },
   },
-  // Local plugin: adds a "Reports" page to the admin sidebar for filtered
-  // CSV exports (src/plugins/reports).
+
   reports: {
     enabled: true,
     resolve: "./src/plugins/reports",
