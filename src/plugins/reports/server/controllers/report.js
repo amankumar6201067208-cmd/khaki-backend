@@ -12,8 +12,6 @@ module.exports = ({ strapi }) => ({
       return ctx.throw(err.status || 500, err.message);
     }
 
-    // Return JSON — the admin fetch client parses responses as JSON, so the
-    // browser rebuilds the CSV file from this payload (see ReportExportButton).
     ctx.body = {
       filename: report.filename,
       rowCount: report.rowCount,
