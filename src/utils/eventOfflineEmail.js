@@ -3,7 +3,7 @@ const { buildEmail, esc } = require("./emailBase");
 // Default venue for offline events (Khaki Lab, Fort, Mumbai). Used when the
 // booking record doesn't carry its own venue / location pin.
 const KHAKI_LAB_VENUE =
-  "Khaki Lab, 302, 3rd Floor, Hari Chambers, Shahid Bhagat Singh Road, Lion Gate, Fort, Above Copper Chimney restaurant, Mumbai, Maharashtra 400001";
+  "Khaki Lab,  3rd Floor, 302, Hari Chambers, Shahid Bhagat Singh Rd, above Copper Chimney Restaurant, Kala Ghoda, Fort, Mumbai, Maharashtra 400001";
 const KHAKI_LAB_LOCATION_PIN = "https://maps.app.goo.gl/NMJFzMbzRU14RyBm9?g_st=iw";
 
 // OFFLINE public event = an EVENT. Registration confirmation with venue details.

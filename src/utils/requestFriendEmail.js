@@ -7,6 +7,8 @@ module.exports = (data) => {
 
       <br/>
       <p>Shared by: ${data.yourName}</p>
+      <br/>
+      <p>Warm regards,<br/>Team Khaki</p>
     </div>
   `;
 };
