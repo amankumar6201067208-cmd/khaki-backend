@@ -476,6 +476,8 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
   attributes: {
     bookingId: Schema.Attribute.UID;
     Bookingstatus: Schema.Attribute.Enumeration<['pending', 'paid', 'failed']>;
+    confirmationEmailSent: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     contactEmail: Schema.Attribute.Email;
     contactName: Schema.Attribute.String;
     contactPhone: Schema.Attribute.String;
@@ -739,6 +741,8 @@ export interface ApiPublicEventBookingPublicEventBooking
     Bookingstatus: Schema.Attribute.Enumeration<
       ['pending', 'paid', 'failed', 'confirmed']
     >;
+    confirmationEmailSent: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     contactEmail: Schema.Attribute.Email;
     contactName: Schema.Attribute.String;
     contactPhone: Schema.Attribute.String;
@@ -828,6 +832,8 @@ export interface ApiPublicWalkBookingPublicWalkBooking
   attributes: {
     bookingId: Schema.Attribute.UID;
     Bookingstatus: Schema.Attribute.Enumeration<['pending', 'paid', 'failed']>;
+    confirmationEmailSent: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     contactEmail: Schema.Attribute.Email;
     contactName: Schema.Attribute.String;
     contactPhone: Schema.Attribute.String;

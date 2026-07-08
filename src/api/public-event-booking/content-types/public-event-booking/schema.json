@@ -38,6 +38,10 @@
         "confirmed"
       ]
     },
+    "confirmationEmailSent": {
+      "type": "boolean",
+      "default": false
+    },
     "contactName": {
       "type": "string"
     },

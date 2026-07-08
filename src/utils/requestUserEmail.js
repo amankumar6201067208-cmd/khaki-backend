@@ -11,7 +11,6 @@ module.exports = (data = {}) =>
       ["Your Email", data.yourEmail],
       ["Friend’s Name", data.friendName],
       ["Friend’s Email", data.friendEmail],
-      ["Message", data.message],
     ],
     outro: [
       "Your support (and theirs) will help us take our mission of “Heritage Evangelism” forward.",

@@ -1,11 +1,11 @@
 "use strict";
-const userEmail = require("../../../utils/eventUserEmail");
 const crypto = require("crypto");
-const { runWithLock } = require("../../../utils/asyncLock");
-const { sendMail } = require("../../../utils/mailer");
 const {
-  sendEventConfirmation,
-} = require("../../../utils/sendEventConfirmation");
+  confirmBookingOnce,
+  BOOKING,
+  EVENT,
+  WALK,
+} = require("../../../utils/confirmBooking");
 
 module.exports = {
   async create(ctx) {
@@ -43,6 +43,8 @@ module.exports = {
   },
 
   // PAYMENT SUCCESS
+  // PayU POSTs here (surl). We verify the hash, flip status -> paid atomically,
+  // then let confirmBookingOnce() do the email + seat reduction exactly once.
   async success(ctx) {
     try {
       const response = ctx.request.body;
@@ -63,7 +65,7 @@ module.exports = {
       const salt = process.env.PAYU_SALT;
       const frontendUrl = process.env.FRONTEND_URL;
 
-      //  HASH VERIFY
+      //  HASH VERIFY — never trust the browser POST without this.
       const reverseString = `${salt}|${status}||||||||||${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
       const calculatedHash = crypto
         .createHash("sha512")
@@ -74,478 +76,60 @@ module.exports = {
         return ctx.redirect(`${frontendUrl}/failed?error=hash_mismatch`);
       }
 
-      //  TRY GROUP BOOKING
-      let booking = await strapi.db.query("api::booking.booking").findOne({
-        where: { bookingId },
-      });
+      const thankYou = (slug) =>
+        ctx.redirect(
+          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}${
+            slug ? `&tourSlug=${slug}` : ""
+          }`,
+        );
 
+      //  GROUP TOUR BOOKING
+      const booking = await strapi.db
+        .query(BOOKING)
+        .findOne({ where: { bookingId } });
       if (booking) {
-        const { count } = await strapi.db
-          .query("api::booking.booking")
-          .updateMany({
-            where: { bookingId, Bookingstatus: { $ne: "paid" } },
-            data: { Bookingstatus: "paid" },
-          });
-
-        if (count === 0) {
-          return ctx.redirect(
-            `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${booking.tourSlug}`,
-          );
-        }
-
-        // GROUP TOUR confirmation from hi@khakitours.com (non-blocking).
-        try {
-          await sendMail("khakitours", {
-            to: booking.contactEmail,
-            subject: `Booking Confirmed for ${booking.tourTitle}`,
-            html: userEmail({
-              ...booking,
-              tourTitle: booking.tourTitle,
-              startingPoint: booking.startingPoint,
-              txnid: txnid,
-            }),
-          });
-        } catch (emailErr) {
-          
-          console.error(
-            " Booking confirmation email failed:",
-            // @ts-ignore
-            emailErr.message,
-          );
-        }
-
-        // SEAT REDUCTION — use entityService to keep Strapi cache in sync
-        const { tourSlug, date, slot: slotTime, tickets } = booking;
-
-        const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
-        const normalizedSlotTime = normalizeTime(slotTime);
-
-        await runWithLock(`trip:${tourSlug}`, async () => {
-          // Fetch the trip with full schedule populated using Documents Service
-          const trips = await strapi.documents("api::trip.trip").findMany({
-            filters: { Slug: tourSlug },
-            populate: {
-              GroupTourBookingDetails: {
-                on: {
-                  "trip.schedule": {
-                    populate: { Slots: true },
-                  },
-                },
-              },
-            },
-            status: "published",
-          });
-
-          const trip = trips?.[0];
-
-          if (trip) {
-            const bookingDate = new Date(date).toDateString();
-
-            const scheduleComponent = trip.GroupTourBookingDetails?.find(
-              (c) => new Date(c.Date).toDateString() === bookingDate,
-            );
-
-            if (scheduleComponent) {
-              const matchingSlot = scheduleComponent.Slots?.find(
-                (s) => normalizeTime(s.Time) === normalizedSlotTime,
-              );
-
-              if (matchingSlot) {
-                const currentSeats = Number(matchingSlot.availableSeats);
-                const newSeats = Math.max(0, currentSeats - Number(tickets));
-
-                console.log(
-                  ` Reducing seats: ${currentSeats} → ${newSeats} for slot ${slotTime}`,
-                );
-
-                // Use documents.update with status: published so cache/draft matches
-                const updatedBookingDetails = trip.GroupTourBookingDetails.map(
-                  (component) => {
-                    if (
-                      new Date(component.Date).toDateString() !== bookingDate
-                    ) {
-                      return {
-                        __component: "trip.schedule",
-                        Date: component.Date,
-                        Slots: component.Slots.map((s) => ({
-                          Time: s.Time,
-                          availableSeats: String(s.availableSeats),
-                        })),
-                      };
-                    }
-
-                    return {
-                      __component: "trip.schedule",
-                      Date: component.Date,
-                      Slots: component.Slots.map((s) => {
-                        if (normalizeTime(s.Time) !== normalizedSlotTime) {
-                          return {
-                            Time: s.Time,
-                            availableSeats: String(s.availableSeats),
-                          };
-                        }
-                        return {
-                          Time: s.Time,
-                          availableSeats: String(newSeats),
-                        };
-                      }),
-                    };
-                  },
-                );
-
-                await strapi.documents("api::trip.trip").update({
-                  documentId: trip.documentId,
-                  data: {
-                    // @ts-ignore
-                    GroupTourBookingDetails: updatedBookingDetails,
-                  },
-                });
-
-                await strapi.documents("api::trip.trip").publish({
-                  documentId: trip.documentId,
-                });
-
-                console.log(
-                  ` Seat reduction saved & published via documents.update for trip: ${tourSlug}`,
-                );
-              } else {
-                console.warn(
-                  " No matching slot found for time:",
-                  normalizedSlotTime,
-                );
-              }
-            } else {
-              console.warn(" No matching schedule found for date:", date);
-            }
-          } else {
-            console.warn(" No trip found for slug:", tourSlug);
-          }
+        // ATOMIC IDEMPOTENCY GUARD — only one call wins the paid-flip.
+        const { count } = await strapi.db.query(BOOKING).updateMany({
+          where: { bookingId, Bookingstatus: { $ne: "paid" } },
+          data: { Bookingstatus: "paid" },
         });
-
-        //  Include tourSlug in redirect so frontend can refresh
-        return ctx.redirect(
-          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${tourSlug}`,
-        );
+        if (count > 0) {
+          await confirmBookingOnce(strapi, BOOKING, bookingId, { txnid });
+        }
+        return thankYou(booking.tourSlug);
       }
 
-      const reducePublicSeats = async (
-        tourSlug,
-        dateString,
-        slotTime,
-        ticketsToReduce,
-      ) => {
-        if (!tourSlug) return;
-        const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
-        const normalizedSlotTime = normalizeTime(slotTime);
-        const activities = await strapi
-          .documents("api::public-walk-and-event.public-walk-and-event")
-          .findMany({
-            filters: { Slug: tourSlug },
-            populate: {
-              BookingSlots: { populate: { Slots: true } },
-            },
-            status: "published",
-          });
-        const activity = activities?.[0];
-        if (activity && activity.BookingSlots) {
-          const bookingDate = new Date(dateString).toDateString();
-          const updatedBookingSlots = activity.BookingSlots.map((component) => {
-            if (new Date(component.TourDate).toDateString() !== bookingDate) {
-              return {
-                __component: "walk-event-trip.booking-slots",
-                TourDate: component.TourDate,
-                Slots: component.Slots
-                  ? {
-                      TourTime: component.Slots.TourTime,
-                      availableTickets: String(
-                        component.Slots.availableTickets,
-                      ),
-                    }
-                  : null,
-              };
-            }
-            if (
-              component.Slots &&
-              normalizeTime(component.Slots.TourTime) === normalizedSlotTime
-            ) {
-              const currentSeats = Number(component.Slots.availableTickets);
-              const newSeats = Math.max(0, currentSeats - ticketsToReduce);
-              console.log(
-                ` Reducing public seats: ${currentSeats} → ${newSeats} for slot ${slotTime}`,
-              );
-              return {
-                __component: "walk-event-trip.booking-slots",
-                TourDate: component.TourDate,
-                Slots: {
-                  TourTime: component.Slots.TourTime,
-                  availableTickets: String(newSeats),
-                },
-              };
-            }
-            return {
-              __component: "walk-event-trip.booking-slots",
-              TourDate: component.TourDate,
-              Slots: component.Slots
-                ? {
-                    TourTime: component.Slots.TourTime,
-                    availableTickets: String(component.Slots.availableTickets),
-                  }
-                : null,
-            };
-          });
-
-          await strapi
-            .documents("api::public-walk-and-event.public-walk-and-event")
-            .update({
-              documentId: activity.documentId,
-              data: {
-                // @ts-ignore
-                BookingSlots: updatedBookingSlots,
-              },
-            });
-
-          await strapi
-            .documents("api::public-walk-and-event.public-walk-and-event")
-            .publish({
-              documentId: activity.documentId,
-            });
-
-          console.log(
-            ` Seat reduction saved & published via documents for public walk/event: ${tourSlug}`,
-          );
-        }
-      };
-
-      //  TRY PUBLIC EVENT BOOKING
+      //  PUBLIC EVENT BOOKING (safety net — events normally use /event-payment)
       const eventBooking = await strapi.db
-        .query("api::public-event-booking.public-event-booking")
+        .query(EVENT)
         .findOne({ where: { bookingId } });
-
       if (eventBooking) {
-        // ATOMIC IDEMPOTENCY GUARD — only one duplicate call wins the flip.
-        const { count } = await strapi.db
-          .query("api::public-event-booking.public-event-booking")
-          .updateMany({
-            where: { bookingId, Bookingstatus: { $ne: "paid" } },
-            data: { Bookingstatus: "paid" },
-          });
-
-        if (count === 0) {
-          return ctx.redirect(
-            `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${eventBooking.tourSlug}`,
-          );
-        }
-
-        //  PUBLIC EVENT confirmation from khakilab (Online/Offline template).
-        // (Events normally use /api/event-payment; this branch is a safety net.)
-        try {
-          await sendEventConfirmation(strapi, eventBooking);
-        } catch (emailErr) {
-          // @ts-ignore
-          console.error(" Event booking email failed:", emailErr.message);
-        }
-
-        const ticketsToReduce = Number(
-          eventBooking.totalParticipants || eventBooking.tickets || 1,
-        );
-        //  Serialize per activity so event + walk bookings can't oversell.
-        await runWithLock(`pubwalk:${eventBooking.tourSlug}`, () =>
-          reducePublicSeats(
-            eventBooking.tourSlug,
-            eventBooking.date,
-            eventBooking.slot,
-            ticketsToReduce,
-          ),
-        );
-
-        return ctx.redirect(
-          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${eventBooking.tourSlug}`,
-        );
-      }
-
-      //  TRY PUBLIC WALK BOOKING
-      const walkBooking = await strapi.db
-        .query("api::public-walk-booking.public-walk-booking")
-        .findOne({ where: { bookingId } });
-
-      if (walkBooking) {
-        //  ATOMIC IDEMPOTENCY GUARD — only one duplicate call wins the flip.
-        const { count } = await strapi.db
-          .query("api::public-walk-booking.public-walk-booking")
-          .updateMany({
-            where: { bookingId, Bookingstatus: { $ne: "paid" } },
-            data: { Bookingstatus: "paid" },
-          });
-
-        if (count === 0) {
-          return ctx.redirect(
-            `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${walkBooking.tourSlug}`,
-          );
-        }
-
-        //  PUBLIC WALK confirmation from hi@khakitours.com (non-blocking).
-        try {
-          await sendMail("khakitours", {
-            to: walkBooking.contactEmail,
-            subject: `Booking Confirmed for ${walkBooking.tourTitle}`,
-            html: userEmail({
-              ...walkBooking,
-              txnid: txnid,
-            }),
-          });
-        } catch (emailErr) {
-          // @ts-ignore
-          console.error(" Walk booking email failed:", emailErr.message);
-        }
-
-        const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
-
-        //  Serialize per activity so concurrent confirmations can't oversell
-        // seats or exceed the discount quota (read-modify-write below).
-        await runWithLock(`pubwalk:${walkBooking.tourSlug}`, async () => {
-          const activities = await strapi
-            .documents("api::public-walk-and-event.public-walk-and-event")
-            .findMany({
-              filters: { Slug: walkBooking.tourSlug },
-              populate: {
-                BookingSlots: { populate: { Slots: true } },
-              },
-              status: "published",
-            });
-
-          const activity = activities?.[0];
-
-          if (activity) {
-            const bookingDate = new Date(walkBooking.date).toDateString();
-            const normalizedSlotTime = normalizeTime(walkBooking.slot);
-
-            const updatedBookingSlots = activity.BookingSlots.map(
-              (component) => {
-                // Non-matching date
-                if (
-                  new Date(component.TourDate).toDateString() !== bookingDate
-                ) {
-                  return {
-                    __component: "walk-event-trip.booking-slots",
-                    TourDate: component.TourDate,
-                    Slots: component.Slots
-                      ? {
-                          TourTime: component.Slots.TourTime,
-                          availableTickets: String(
-                            component.Slots.availableTickets,
-                          ),
-                          discountUsedCount: Number(
-                            component.Slots.discountUsedCount || 0,
-                          ),
-                        }
-                      : null,
-                  };
-                }
-
-                // Matching date + matching slot
-                if (
-                  component.Slots &&
-                  normalizeTime(component.Slots.TourTime) === normalizedSlotTime
-                ) {
-                  const currentSeats = Number(component.Slots.availableTickets);
-                  const newSeats = Math.max(
-                    0,
-                    currentSeats - Number(walkBooking.tickets),
-                  );
-
-                  //  DISCOUNT LOGIC — fresh from DB, not from frontend
-                  // Parse passengers — DB mein JSON string ya array dono handle karo
-                  let passengers = walkBooking.passengers || [];
-                  if (typeof passengers === "string") {
-                    try {
-                      passengers = JSON.parse(passengers);
-                    } catch {
-                      passengers = [];
-                    }
-                  }
-                  if (!Array.isArray(passengers)) passengers = [];
-
-                  const discountEligibleCount = passengers.filter(
-                    (p) =>
-                      p?.category === "student" || p?.category === "senior",
-                  ).length;
-
-                  // Fresh discountUsedCount from DB — race condition safe
-                  const currentDiscountUsed = Number(
-                    component.Slots.discountUsedCount || 0,
-                  );
-                  const maxDiscount = 3;
-                  const remainingDiscount = Math.max(
-                    0,
-                    maxDiscount - currentDiscountUsed,
-                  );
-
-                  // Only apply as many discounts as remaining quota allows
-                  const appliedDiscount = Math.min(
-                    discountEligibleCount,
-                    remainingDiscount,
-                  );
-
-                  console.log(
-                    ` Eligible: ${discountEligibleCount}, Remaining: ${remainingDiscount}, Applied: ${appliedDiscount}, NewTotal: ${currentDiscountUsed + appliedDiscount}`,
-                  );
-
-                  return {
-                    __component: "walk-event-trip.booking-slots",
-                    TourDate: component.TourDate,
-                    Slots: {
-                      TourTime: component.Slots.TourTime,
-                      availableTickets: String(newSeats),
-                      discountUsedCount: currentDiscountUsed + appliedDiscount,
-                    },
-                  };
-                }
-
-                // Matching date, different slot
-                return {
-                  __component: "walk-event-trip.booking-slots",
-                  TourDate: component.TourDate,
-                  Slots: component.Slots
-                    ? {
-                        TourTime: component.Slots.TourTime,
-                        availableTickets: String(
-                          component.Slots.availableTickets,
-                        ),
-                        discountUsedCount: Number(
-                          component.Slots.discountUsedCount || 0,
-                        ),
-                      }
-                    : null,
-                };
-              },
-            );
-
-            await strapi
-              .documents("api::public-walk-and-event.public-walk-and-event")
-              .update({
-                documentId: activity.documentId,
-                data: {
-                  // @ts-ignore
-                  BookingSlots: updatedBookingSlots,
-                },
-              });
-
-            await strapi
-              .documents("api::public-walk-and-event.public-walk-and-event")
-              .publish({
-                documentId: activity.documentId,
-              });
-
-            console.log(" Seats + Discount Updated");
-          }
+        const { count } = await strapi.db.query(EVENT).updateMany({
+          where: { bookingId, Bookingstatus: { $ne: "paid" } },
+          data: { Bookingstatus: "paid" },
         });
-
-        return ctx.redirect(
-          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${walkBooking.tourSlug}`,
-        );
+        if (count > 0) {
+          await confirmBookingOnce(strapi, EVENT, bookingId, { txnid });
+        }
+        return thankYou(eventBooking.tourSlug);
       }
 
-      // Fallback
+      //  PUBLIC WALK BOOKING
+      const walkBooking = await strapi.db
+        .query(WALK)
+        .findOne({ where: { bookingId } });
+      if (walkBooking) {
+        const { count } = await strapi.db.query(WALK).updateMany({
+          where: { bookingId, Bookingstatus: { $ne: "paid" } },
+          data: { Bookingstatus: "paid" },
+        });
+        if (count > 0) {
+          await confirmBookingOnce(strapi, WALK, bookingId, { txnid });
+        }
+        return thankYou(walkBooking.tourSlug);
+      }
+
+      // Fallback — no matching booking record.
       return ctx.redirect(
         `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid`,
       );
@@ -556,38 +140,23 @@ module.exports = {
   },
 
   // PAYMENT FAILURE
-
+  // Mark the booking failed — but NEVER overwrite an already-paid booking (a
+  // late/duplicate furl must not undo a real success). No email is ever sent.
   async failure(ctx) {
     try {
       const response = ctx.request.body;
       const bookingId = response.udf1;
       const frontendUrl = process.env.FRONTEND_URL;
 
-      // Try updating all booking types — safe to run all, only one will match
-      try {
-        await strapi.db.query("api::booking.booking").update({
-          where: { bookingId },
-          data: { Bookingstatus: "failed" },
-        });
-      } catch (_) {}
-
-      try {
-        await strapi.db
-          .query("api::public-event-booking.public-event-booking")
-          .update({
-            where: { bookingId },
+      // Safe to run all three — only the matching type has this bookingId.
+      for (const uid of [BOOKING, EVENT, WALK]) {
+        try {
+          await strapi.db.query(uid).updateMany({
+            where: { bookingId, Bookingstatus: { $ne: "paid" } },
             data: { Bookingstatus: "failed" },
           });
-      } catch (_) {}
-
-      try {
-        await strapi.db
-          .query("api::public-walk-booking.public-walk-booking")
-          .update({
-            where: { bookingId },
-            data: { Bookingstatus: "failed" },
-          });
-      } catch (_) {}
+        } catch (_) {}
+      }
 
       return ctx.redirect(
         `${frontendUrl}/thank-you?bookingId=${bookingId}&status=failed`,
