@@ -140,7 +140,7 @@ function toCsv(rows, columns) {
 /** Build Strapi filters for a single report type from the query params. */
 function buildFilters(
   typeConfig,
-  { tour, status, dateFrom, dateTo, dateField },
+  { tour, status, slot, dateFrom, dateTo, dateField },
 ) {
   const filters = {};
   const and = [];
@@ -155,6 +155,11 @@ function buildFilters(
     filters[typeConfig.statusField] = { $eq: status };
   }
 
+  // Time-slot filter — only meaningful for the booking types that store `slot`.
+  if (slot && typeConfig.columns.includes("slot")) {
+    filters.slot = { $eq: slot };
+  }
+
   const field = dateField || typeConfig.dateField;
   if (dateFrom || dateTo) {
     filters[field] = {};
@@ -164,6 +169,148 @@ function buildFilters(
 
   if (and.length) filters.$and = and;
   return filters;
+}
+
+/**
+ * Distinct, non-empty `slot` values across the booking types that have slots,
+ * honouring the same tour/date filters. Powers the "Time slot" dropdown so the
+ * admin can pick from the slots that actually exist for a date.
+ * @param {object} strapi
+ * @param {object} query - { type, tour, dateFrom, dateTo, dateField }
+ * @returns {Promise<string[]>}
+ */
+async function distinctSlots(strapi, query) {
+  const type = (query.type || "all").toLowerCase();
+  const keys = type === "all" ? ALL_BOOKING_TYPES : [type];
+  const slots = new Set();
+
+  for (const key of keys) {
+    const cfg = TYPES[key];
+    if (!cfg || !cfg.columns.includes("slot")) continue;
+
+    // Build filters WITHOUT slot — we want every slot for this date/tour.
+    const filters = buildFilters(cfg, {
+      tour: query.tour,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      dateField: query.dateField,
+    });
+
+    const pageSize = 1000;
+    let start = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const batch = await strapi.documents(cfg.model).findMany({
+        filters,
+        fields: ["slot"],
+        start,
+        limit: pageSize,
+      });
+      for (const r of batch) {
+        if (r.slot != null && String(r.slot).trim() !== "") {
+          slots.add(String(r.slot));
+        }
+      }
+      if (batch.length < pageSize) break;
+      start += pageSize;
+    }
+  }
+
+  return [...slots].sort();
+}
+
+/**
+ * Distinct tour dates (YYYY-MM-DD, newest first) for a tour, across the booking
+ * types that have a `date`. Powers the "Tour date" dropdown so the admin picks
+ * from dates that actually have bookings.
+ * @param {object} strapi
+ * @param {object} query - { type, tour }
+ * @returns {Promise<string[]>}
+ */
+async function distinctDates(strapi, query) {
+  const type = (query.type || "all").toLowerCase();
+  const keys = type === "all" ? ALL_BOOKING_TYPES : [type];
+  const dates = new Set();
+
+  for (const key of keys) {
+    const cfg = TYPES[key];
+    if (!cfg || !cfg.columns.includes("date")) continue;
+
+    const filters = buildFilters(cfg, { tour: query.tour });
+
+    const pageSize = 1000;
+    let start = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const batch = await strapi.documents(cfg.model).findMany({
+        filters,
+        fields: ["date"],
+        start,
+        limit: pageSize,
+      });
+      for (const r of batch) {
+        if (r.date != null && String(r.date).trim() !== "") {
+          dates.add(String(r.date).slice(0, 10));
+        }
+      }
+      if (batch.length < pageSize) break;
+      start += pageSize;
+    }
+  }
+
+  // YYYY-MM-DD sorts chronologically; reverse → newest first.
+  return [...dates].sort().reverse();
+}
+
+/**
+ * Count bookings by status for the current tour/date/slot filters, so the
+ * "Status" dropdown can show which statuses exist and how many of each.
+ * @param {object} strapi
+ * @param {object} query - { type, tour, slot, dateFrom, dateTo, dateField }
+ * @returns {Promise<Array<{ status: string, count: number }>>}
+ */
+async function statusCounts(strapi, query) {
+  const type = (query.type || "all").toLowerCase();
+  const keys = type === "all" ? ALL_BOOKING_TYPES : [type];
+  const counts = {};
+
+  for (const key of keys) {
+    const cfg = TYPES[key];
+    if (!cfg || !cfg.statusField) continue;
+
+    // Filter by everything EXCEPT status (we're counting each status).
+    const filters = buildFilters(cfg, {
+      tour: query.tour,
+      slot: query.slot,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      dateField: query.dateField,
+    });
+
+    const pageSize = 1000;
+    let start = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const batch = await strapi.documents(cfg.model).findMany({
+        filters,
+        fields: [cfg.statusField],
+        start,
+        limit: pageSize,
+      });
+      for (const r of batch) {
+        const s = r[cfg.statusField];
+        if (s != null && String(s).trim() !== "") {
+          counts[s] = (counts[s] || 0) + 1;
+        }
+      }
+      if (batch.length < pageSize) break;
+      start += pageSize;
+    }
+  }
+
+  return Object.entries(counts)
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => a.status.localeCompare(b.status));
 }
 
 /** Fetch all matching rows for one type (paginates to avoid the default cap). */
@@ -201,6 +348,7 @@ async function buildReport(strapi, query) {
   const params = {
     tour: query.tour,
     status: query.status,
+    slot: query.slot,
     dateFrom: query.dateFrom,
     dateTo: query.dateTo,
     dateField: query.dateField,
@@ -241,4 +389,10 @@ async function buildReport(strapi, query) {
   return { csv, filename, rowCount: rows.length };
 }
 
-module.exports = { buildReport, TYPES };
+module.exports = {
+  buildReport,
+  distinctSlots,
+  distinctDates,
+  statusCounts,
+  TYPES,
+};

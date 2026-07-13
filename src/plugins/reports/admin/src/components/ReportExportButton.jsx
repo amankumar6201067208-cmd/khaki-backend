@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useFetchClient } from "@strapi/strapi/admin";
 import {
@@ -42,6 +42,21 @@ const fmtDate = (d) => {
   return `${date.getFullYear()}-${mm}-${dd}`;
 };
 
+// Small grey explanatory line shown above a field.
+const Help = ({ children }) => (
+  <Box paddingBottom={1}>
+    <Typography variant="pi" textColor="neutral600">
+      {children}
+    </Typography>
+  </Box>
+);
+
+const FieldLabel = ({ children }) => (
+  <Typography variant="pi" fontWeight="bold" tag="label">
+    {children}
+  </Typography>
+);
+
 const ReportExportButton = () => {
   const { pathname } = useLocation();
   const { get } = useFetchClient();
@@ -56,14 +71,126 @@ const ReportExportButton = () => {
   const [status, setStatus] = useState("");
   const [from, setFrom] = useState(null);
   const [to, setTo] = useState(null);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [dateOptions, setDateOptions] = useState([]);
+  const [datesLoading, setDatesLoading] = useState(false);
+  const [slot, setSlot] = useState("");
+  const [slotOptions, setSlotOptions] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [statusLoading, setStatusLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Not a supported collection → don't render anything in the toolbar.
-  if (!type) return null;
-
+  // Group / Walk / Event carry a tour date + time slot; Donation & Private don't.
+  const showSlot = type === "group" || type === "walk" || type === "event";
   const showTour = type !== "donation";
   const showStatus = type !== "private";
+
+  // Build the date/slot query params for the current selection (shared by the
+  // status fetch and the export).
+  const dateSlotParams = (params) => {
+    if (showSlot) {
+      if (selectedDate) {
+        params.set("dateFrom", selectedDate);
+        params.set("dateTo", selectedDate);
+      }
+      if (slot) params.set("slot", slot);
+    } else {
+      const f = fmtDate(from);
+      const t = fmtDate(to);
+      if (f) params.set("dateFrom", f);
+      if (t) params.set("dateTo", t);
+    }
+    return params;
+  };
+
+  // Step 1 → 2: when the tour changes, load the dates that actually have
+  // bookings for it so the admin picks from a real list.
+  useEffect(() => {
+    if (!open || !showSlot) return;
+    const params = new URLSearchParams();
+    params.set("type", type);
+    if (tour.trim()) params.set("tour", tour.trim());
+
+    let cancelled = false;
+    setDatesLoading(true);
+    get(`/reports/dates?${params.toString()}`)
+      .then((res) => {
+        if (cancelled) return;
+        const list = res.data?.dates || [];
+        setDateOptions(list);
+        setSelectedDate((d) => (list.includes(d) ? d : ""));
+      })
+      .catch(() => !cancelled && setDateOptions([]))
+      .finally(() => !cancelled && setDatesLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, showSlot, type, tour]);
+
+  // Step 2 → 3: when a date is chosen, load that date's time slots.
+  useEffect(() => {
+    if (!open || !showSlot || !selectedDate) {
+      setSlotOptions([]);
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set("type", type);
+    if (tour.trim()) params.set("tour", tour.trim());
+    params.set("dateFrom", selectedDate);
+    params.set("dateTo", selectedDate);
+
+    let cancelled = false;
+    setSlotsLoading(true);
+    get(`/reports/slots?${params.toString()}`)
+      .then((res) => {
+        if (cancelled) return;
+        const list = res.data?.slots || [];
+        setSlotOptions(list);
+        setSlot((s) => (list.includes(s) ? s : ""));
+      })
+      .catch(() => !cancelled && setSlotOptions([]))
+      .finally(() => !cancelled && setSlotsLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, showSlot, type, tour, selectedDate]);
+
+  // Final step: count bookings per status for the current tour/date/slot, so
+  // the Status dropdown shows what exists and how many of each.
+  useEffect(() => {
+    if (!open || !showStatus) return;
+    const params = new URLSearchParams();
+    params.set("type", type);
+    if (showTour && tour.trim()) params.set("tour", tour.trim());
+    dateSlotParams(params);
+
+    let cancelled = false;
+    setStatusLoading(true);
+    get(`/reports/statuses?${params.toString()}`)
+      .then((res) => {
+        if (cancelled) return;
+        const list = res.data?.statuses || [];
+        setStatusOptions(list);
+        // Drop the selected status if it no longer appears.
+        setStatus((s) => (list.some((o) => o.status === s) ? s : ""));
+      })
+      .catch(() => !cancelled && setStatusOptions([]))
+      .finally(() => !cancelled && setStatusLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, showStatus, showTour, type, tour, selectedDate, slot, from, to]);
+
+  // Not a supported collection → don't render anything in the toolbar.
+  if (!type) return null;
 
   const handleDownload = async () => {
     setLoading(true);
@@ -73,10 +200,7 @@ const ReportExportButton = () => {
       params.set("type", type);
       if (showTour && tour.trim()) params.set("tour", tour.trim());
       if (showStatus && status) params.set("status", status);
-      const f = fmtDate(from);
-      const t = fmtDate(to);
-      if (f) params.set("dateFrom", f);
-      if (t) params.set("dateTo", t);
+      dateSlotParams(params);
 
       const res = await get(`/reports/export?${params.toString()}`);
       const { csv, filename, rowCount } = res.data || {};
@@ -125,51 +249,169 @@ const ReportExportButton = () => {
             </Modal.Header>
             <Modal.Body>
               <Flex direction="column" alignItems="stretch" gap={4}>
+                {/* Overall explanation */}
+                <Box
+                  background="neutral100"
+                  padding={3}
+                  hasRadius
+                >
+                  <Typography variant="omega" textColor="neutral700">
+                    {showSlot
+                      ? "Download a CSV of these bookings. Filter step by step: type a tour, then pick one of its tour dates, then a time slot on that date. Leave any filter empty to include everything."
+                      : "Download a CSV of these records. Use the filters below to narrow the export, or leave them empty to include everything."}
+                  </Typography>
+                </Box>
+
                 {showTour && (
-                  <TextInput
-                    label="Tour (slug or title — optional)"
-                    name="tour"
-                    value={tour}
-                    onChange={(e) => setTour(e.target.value)}
-                    placeholder="e.g. fort-walk"
-                    hint="Leave empty to include every tour"
-                  />
+                  <Box>
+                    <Help>
+                      Which tour to export. Enter the tour&apos;s slug or title.
+                      This also drives the tour dates below.
+                    </Help>
+                    <TextInput
+                      label="Tour (slug or title)"
+                      name="tour"
+                      value={tour}
+                      onChange={(e) => setTour(e.target.value)}
+                      placeholder="e.g. fort-walk"
+                      hint="Leave empty to include every tour"
+                    />
+                  </Box>
                 )}
 
+                {showSlot ? (
+                  <>
+                    {/* TOUR DATE (fetched from bookings for the tour) */}
+                    <Box>
+                      <Help>
+                        The tour date (the day the tour runs). These are loaded
+                        from actual bookings for the tour above.
+                      </Help>
+                      <FieldLabel>Tour date</FieldLabel>
+                      <Box paddingTop={1}>
+                        <SingleSelect
+                          value={selectedDate}
+                          onChange={(v) => setSelectedDate(String(v))}
+                          
+                          disabled={datesLoading || dateOptions.length === 0}
+                        >
+                          <SingleSelectOption value="">
+                            All dates
+                          </SingleSelectOption>
+                          {dateOptions.map((d) => (
+                            <SingleSelectOption key={d} value={d}>
+                              {d}
+                            </SingleSelectOption>
+                          ))}
+                        </SingleSelect>
+                      </Box>
+                      <Box paddingTop={1}>
+                        <Typography variant="pi" textColor="neutral600">
+                          {datesLoading
+                            ? "Loading dates…"
+                            : dateOptions.length
+                              ? `${dateOptions.length} date(s) with bookings.`
+                              : "No booking dates yet — type a tour to load its dates."}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* TIME SLOT (fetched for the chosen date) */}
+                    <Box>
+                      <Help>
+                        The time slot on the selected date. Useful for tours that
+                        run several slots a day.
+                      </Help>
+                      <FieldLabel>Time slot</FieldLabel>
+                      <Box paddingTop={1}>
+                        <SingleSelect
+                          value={slot}
+                          onChange={(v) => setSlot(String(v))}
+                          disabled={
+                            !selectedDate ||
+                            slotsLoading ||
+                            slotOptions.length === 0
+                          }
+                        >
+                          <SingleSelectOption value="">
+                            Any slot
+                          </SingleSelectOption>
+                          {slotOptions.map((s) => (
+                            <SingleSelectOption key={s} value={s}>
+                              {s}
+                            </SingleSelectOption>
+                          ))}
+                        </SingleSelect>
+                      </Box>
+                      <Box paddingTop={1}>
+                        <Typography variant="pi" textColor="neutral600">
+                          {!selectedDate
+                            ? "Pick a tour date first to load its slots."
+                            : slotsLoading
+                              ? "Loading slots…"
+                              : slotOptions.length
+                                ? `${slotOptions.length} slot(s) on this date.`
+                                : "No slots found for this date."}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </>
+                ) : (
+                  /* Donation / Private → free date range on their own date field */
+                  <Box>
+                    <Help>
+                      Filter by a date range. Leave empty to include all dates.
+                    </Help>
+                    <Flex gap={4} alignItems="flex-start">
+                      <Box flex="1">
+                        <DatePicker label="Date from" onChange={setFrom} />
+                      </Box>
+                      <Box flex="1">
+                        <DatePicker label="Date to" onChange={setTo} />
+                      </Box>
+                    </Flex>
+                  </Box>
+                )}
+
+                {/* STATUS — last; counts fetched for the current tour/date/slot */}
                 {showStatus && (
                   <Box>
-                    <Typography variant="pi" fontWeight="bold" tag="label">
-                      Status
-                    </Typography>
+                    <Help>
+                      Booking status for the current filters above. The number in
+                      brackets is how many bookings have that status.
+                    </Help>
+                    <FieldLabel>Status</FieldLabel>
                     <Box paddingTop={1}>
                       <SingleSelect
                         value={status}
                         onChange={(v) => setStatus(String(v))}
-                        placeholder="Any status"
+
+                        disabled={statusLoading}
                       >
                         <SingleSelectOption value="">
                           Any status
                         </SingleSelectOption>
-                        <SingleSelectOption value="paid">Paid</SingleSelectOption>
-                        <SingleSelectOption value="pending">
-                          Pending
-                        </SingleSelectOption>
-                        <SingleSelectOption value="failed">
-                          Failed
-                        </SingleSelectOption>
+                        {statusOptions.map((o) => (
+                          <SingleSelectOption key={o.status} value={o.status}>
+                            {o.status.charAt(0).toUpperCase() + o.status.slice(1)}{" "}
+                            ({o.count})
+                          </SingleSelectOption>
+                        ))}
                       </SingleSelect>
+                    </Box>
+                    <Box paddingTop={1}>
+                      <Typography variant="pi" textColor="neutral600">
+                        {statusLoading
+                          ? "Loading statuses…"
+                          : statusOptions.length
+                            ? `${statusOptions
+                                .map((o) => `${o.status}: ${o.count}`)
+                                .join(", ")}`
+                            : "No bookings match the filters above."}
+                      </Typography>
                     </Box>
                   </Box>
                 )}
-
-                <Flex gap={4} alignItems="flex-start">
-                  <Box flex="1">
-                    <DatePicker label="Date from" onChange={setFrom} />
-                  </Box>
-                  <Box flex="1">
-                    <DatePicker label="Date to" onChange={setTo} />
-                  </Box>
-                </Flex>
 
                 {error ? (
                   <Typography textColor="danger600">{error}</Typography>
