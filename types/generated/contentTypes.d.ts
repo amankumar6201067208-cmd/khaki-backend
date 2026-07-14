@@ -682,6 +682,7 @@ export interface ApiPrivateTourBookingPrivateTourBooking
     title: Schema.Attribute.String;
     totalAmount: Schema.Attribute.Decimal;
     tourName: Schema.Attribute.String;
+    tourslug: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

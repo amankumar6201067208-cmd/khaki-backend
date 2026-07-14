@@ -32,6 +32,35 @@ const LABELS = {
   private: "Private Tour",
 };
 
+// Types that use the guided tour → date → slot flow, with per-type labels.
+// (Private uses preferred date + start time; it has no payment status.)
+const GUIDED = {
+  group: {
+    dateLabel: "Tour date",
+    dateHelp: "The tour date (the day the tour runs), loaded from actual bookings.",
+    slotLabel: "Time slot",
+    slotHelp: "The time slot on the selected date.",
+  },
+  walk: {
+    dateLabel: "Tour date",
+    dateHelp: "The tour date (the day the walk runs), loaded from actual bookings.",
+    slotLabel: "Time slot",
+    slotHelp: "The time slot on the selected date.",
+  },
+  event: {
+    dateLabel: "Tour date",
+    dateHelp: "The tour date (the day the event runs), loaded from actual bookings.",
+    slotLabel: "Time slot",
+    slotHelp: "The time slot on the selected date.",
+  },
+  private: {
+    dateLabel: "Preferred date",
+    dateHelp: "The customer's preferred date, loaded from actual requests.",
+    slotLabel: "Start time",
+    slotHelp: "The requested start time on the selected date.",
+  },
+};
+
 // Format a Date (from DatePicker) to YYYY-MM-DD using local parts (no TZ shift).
 const fmtDate = (d) => {
   if (!d) return "";
@@ -82,15 +111,17 @@ const ReportExportButton = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Group / Walk / Event carry a tour date + time slot; Donation & Private don't.
-  const showSlot = type === "group" || type === "walk" || type === "event";
+  // Guided flow (tour → date → slot). Group/Walk/Event use tour date + time
+  // slot; Private uses preferred date + start time. Donation uses neither.
+  const guided = type ? GUIDED[type] : null;
+  const showGuided = !!guided;
   const showTour = type !== "donation";
   const showStatus = type !== "private";
 
   // Build the date/slot query params for the current selection (shared by the
   // status fetch and the export).
   const dateSlotParams = (params) => {
-    if (showSlot) {
+    if (showGuided) {
       if (selectedDate) {
         params.set("dateFrom", selectedDate);
         params.set("dateTo", selectedDate);
@@ -108,7 +139,7 @@ const ReportExportButton = () => {
   // Step 1 → 2: when the tour changes, load the dates that actually have
   // bookings for it so the admin picks from a real list.
   useEffect(() => {
-    if (!open || !showSlot) return;
+    if (!open || !showGuided) return;
     const params = new URLSearchParams();
     params.set("type", type);
     if (tour.trim()) params.set("tour", tour.trim());
@@ -129,11 +160,11 @@ const ReportExportButton = () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, showSlot, type, tour]);
+  }, [open, showGuided, type, tour]);
 
   // Step 2 → 3: when a date is chosen, load that date's time slots.
   useEffect(() => {
-    if (!open || !showSlot || !selectedDate) {
+    if (!open || !showGuided || !selectedDate) {
       setSlotOptions([]);
       return;
     }
@@ -159,7 +190,7 @@ const ReportExportButton = () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, showSlot, type, tour, selectedDate]);
+  }, [open, showGuided, type, tour, selectedDate]);
 
   // Final step: count bookings per status for the current tour/date/slot, so
   // the Status dropdown shows what exists and how many of each.
@@ -256,8 +287,8 @@ const ReportExportButton = () => {
                   hasRadius
                 >
                   <Typography variant="omega" textColor="neutral700">
-                    {showSlot
-                      ? "Download a CSV of these bookings. Filter step by step: type a tour, then pick one of its tour dates, then a time slot on that date. Leave any filter empty to include everything."
+                    {showGuided
+                      ? `Download a CSV of these bookings. Filter step by step: type a tour, then pick a ${guided.dateLabel.toLowerCase()}, then a ${guided.slotLabel.toLowerCase()}. Leave any filter empty to include everything.`
                       : "Download a CSV of these records. Use the filters below to narrow the export, or leave them empty to include everything."}
                   </Typography>
                 </Box>
@@ -279,20 +310,16 @@ const ReportExportButton = () => {
                   </Box>
                 )}
 
-                {showSlot ? (
+                {showGuided ? (
                   <>
-                    {/* TOUR DATE (fetched from bookings for the tour) */}
+                    {/* DATE (fetched from bookings for the tour) */}
                     <Box>
-                      <Help>
-                        The tour date (the day the tour runs). These are loaded
-                        from actual bookings for the tour above.
-                      </Help>
-                      <FieldLabel>Tour date</FieldLabel>
+                      <Help>{guided.dateHelp}</Help>
+                      <FieldLabel>{guided.dateLabel}</FieldLabel>
                       <Box paddingTop={1}>
                         <SingleSelect
                           value={selectedDate}
                           onChange={(v) => setSelectedDate(String(v))}
-                          
                           disabled={datesLoading || dateOptions.length === 0}
                         >
                           <SingleSelectOption value="">
@@ -316,13 +343,10 @@ const ReportExportButton = () => {
                       </Box>
                     </Box>
 
-                    {/* TIME SLOT (fetched for the chosen date) */}
+                    {/* SLOT / START TIME (fetched for the chosen date) */}
                     <Box>
-                      <Help>
-                        The time slot on the selected date. Useful for tours that
-                        run several slots a day.
-                      </Help>
-                      <FieldLabel>Time slot</FieldLabel>
+                      <Help>{guided.slotHelp}</Help>
+                      <FieldLabel>{guided.slotLabel}</FieldLabel>
                       <Box paddingTop={1}>
                         <SingleSelect
                           value={slot}
@@ -334,7 +358,7 @@ const ReportExportButton = () => {
                           }
                         >
                           <SingleSelectOption value="">
-                            Any slot
+                            {`Any ${guided.slotLabel.toLowerCase()}`}
                           </SingleSelectOption>
                           {slotOptions.map((s) => (
                             <SingleSelectOption key={s} value={s}>
@@ -346,18 +370,18 @@ const ReportExportButton = () => {
                       <Box paddingTop={1}>
                         <Typography variant="pi" textColor="neutral600">
                           {!selectedDate
-                            ? "Pick a tour date first to load its slots."
+                            ? `Pick a ${guided.dateLabel.toLowerCase()} first.`
                             : slotsLoading
-                              ? "Loading slots…"
+                              ? "Loading…"
                               : slotOptions.length
-                                ? `${slotOptions.length} slot(s) on this date.`
-                                : "No slots found for this date."}
+                                ? `${slotOptions.length} option(s) on this date.`
+                                : "None found for this date."}
                         </Typography>
                       </Box>
                     </Box>
                   </>
                 ) : (
-                  /* Donation / Private → free date range on their own date field */
+                  /* Donation → free date range on its createdAt date */
                   <Box>
                     <Help>
                       Filter by a date range. Leave empty to include all dates.

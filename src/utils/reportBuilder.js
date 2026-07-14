@@ -5,6 +5,7 @@ const TYPES = {
     model: "api::booking.booking",
     label: "Group Tour",
     dateField: "date",
+    slotField: "slot",
     statusField: "Bookingstatus",
     tourFields: ["tourSlug", "tourTitle"],
     columns: [
@@ -28,6 +29,7 @@ const TYPES = {
     model: "api::public-walk-booking.public-walk-booking",
     label: "Public Walk",
     dateField: "date",
+    slotField: "slot",
     statusField: "Bookingstatus",
     tourFields: ["tourSlug", "tourTitle"],
     columns: [
@@ -51,6 +53,7 @@ const TYPES = {
     model: "api::public-event-booking.public-event-booking",
     label: "Public Event",
     dateField: "date",
+    slotField: "slot",
     statusField: "Bookingstatus",
     tourFields: ["tourSlug", "tourTitle"],
     columns: [
@@ -93,11 +96,13 @@ const TYPES = {
     model: "api::private-tour-booking.private-tour-booking",
     label: "Private Tour",
     dateField: "preferredDate",
+    slotField: "startTime",
     statusField: null,
-    tourFields: ["tourName", "title"],
+    tourFields: ["tourName", "title", "tourslug"],
     columns: [
       "title",
       "tourName",
+      "tourslug",
       "name",
       "email",
       "phone",
@@ -155,9 +160,9 @@ function buildFilters(
     filters[typeConfig.statusField] = { $eq: status };
   }
 
-  // Time-slot filter — only meaningful for the booking types that store `slot`.
-  if (slot && typeConfig.columns.includes("slot")) {
-    filters.slot = { $eq: slot };
+  // Time-slot filter — uses each type's slot-like field (slot / startTime).
+  if (slot && typeConfig.slotField) {
+    filters[typeConfig.slotField] = { $eq: slot };
   }
 
   const field = dateField || typeConfig.dateField;
@@ -186,7 +191,8 @@ async function distinctSlots(strapi, query) {
 
   for (const key of keys) {
     const cfg = TYPES[key];
-    if (!cfg || !cfg.columns.includes("slot")) continue;
+    if (!cfg || !cfg.slotField) continue;
+    const slotField = cfg.slotField;
 
     // Build filters WITHOUT slot — we want every slot for this date/tour.
     const filters = buildFilters(cfg, {
@@ -202,13 +208,13 @@ async function distinctSlots(strapi, query) {
     while (true) {
       const batch = await strapi.documents(cfg.model).findMany({
         filters,
-        fields: ["slot"],
+        fields: [slotField],
         start,
         limit: pageSize,
       });
       for (const r of batch) {
-        if (r.slot != null && String(r.slot).trim() !== "") {
-          slots.add(String(r.slot));
+        if (r[slotField] != null && String(r[slotField]).trim() !== "") {
+          slots.add(String(r[slotField]));
         }
       }
       if (batch.length < pageSize) break;
@@ -234,7 +240,10 @@ async function distinctDates(strapi, query) {
 
   for (const key of keys) {
     const cfg = TYPES[key];
-    if (!cfg || !cfg.columns.includes("date")) continue;
+    // Use the type's own date field (date / preferredDate). Skip donation,
+    // whose date field is createdAt (not a tour date to pick from).
+    if (!cfg || !cfg.dateField || cfg.dateField === "createdAt") continue;
+    const dateField = cfg.dateField;
 
     const filters = buildFilters(cfg, { tour: query.tour });
 
@@ -244,13 +253,13 @@ async function distinctDates(strapi, query) {
     while (true) {
       const batch = await strapi.documents(cfg.model).findMany({
         filters,
-        fields: ["date"],
+        fields: [dateField],
         start,
         limit: pageSize,
       });
       for (const r of batch) {
-        if (r.date != null && String(r.date).trim() !== "") {
-          dates.add(String(r.date).slice(0, 10));
+        if (r[dateField] != null && String(r[dateField]).trim() !== "") {
+          dates.add(String(r[dateField]).slice(0, 10));
         }
       }
       if (batch.length < pageSize) break;

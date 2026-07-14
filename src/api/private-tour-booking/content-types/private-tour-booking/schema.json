@@ -52,6 +52,9 @@
     },
     "acceptedTerms": {
       "type": "string"
+    },
+    "tourslug": {
+      "type": "string"
     }
   }
 }
