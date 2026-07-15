@@ -1,21 +1,5 @@
 "use strict";
 
-/**
- * SINGLE SOURCE OF TRUTH for "a booking became paid".
- *
- * Whether the paid-flip comes from the PayU callback (auto) or from an admin
- * manually setting Bookingstatus -> paid in the Strapi panel (manual verify),
- * everything that must happen exactly once — the customer confirmation email
- * AND the seat reduction — runs from here.
- *
- * Idempotency is guaranteed by an atomic claim on `confirmationEmailSent`:
- * only the first caller that flips the flag from !true -> true actually sends
- * the email + reduces seats. Every later/duplicate call is a no-op.
- *
- * RULE: the customer confirmation email is ONLY ever sent when
- * Bookingstatus === "paid". A pending or failed booking never emails.
- */
-
 const userEmail = require("./eventUserEmail");
 const { runWithLock } = require("./asyncLock");
 const { sendMail } = require("./mailer");
@@ -27,9 +11,7 @@ const BOOKING = "api::booking.booking";
 const EVENT = "api::public-event-booking.public-event-booking";
 const WALK = "api::public-walk-booking.public-walk-booking";
 
-// ---------------------------------------------------------------------------
 // SEAT REDUCTION — GROUP TOUR (api::booking.booking -> api::trip.trip)
-// ---------------------------------------------------------------------------
 async function reduceGroupTourSeats(strapi, booking) {
   const { tourSlug, date, slot: slotTime, tickets } = booking;
   const normalizedSlotTime = normalizeTime(slotTime);
@@ -72,28 +54,30 @@ async function reduceGroupTourSeats(strapi, booking) {
   const currentSeats = Number(matchingSlot.availableSeats);
   const newSeats = Math.max(0, currentSeats - Number(tickets));
 
-  const updatedBookingDetails = trip.GroupTourBookingDetails.map((component) => {
-    if (new Date(component.Date).toDateString() !== bookingDate) {
+  const updatedBookingDetails = trip.GroupTourBookingDetails.map(
+    (component) => {
+      if (new Date(component.Date).toDateString() !== bookingDate) {
+        return {
+          __component: "trip.schedule",
+          Date: component.Date,
+          Slots: component.Slots.map((s) => ({
+            Time: s.Time,
+            availableSeats: String(s.availableSeats),
+          })),
+        };
+      }
       return {
         __component: "trip.schedule",
         Date: component.Date,
-        Slots: component.Slots.map((s) => ({
-          Time: s.Time,
-          availableSeats: String(s.availableSeats),
-        })),
+        Slots: component.Slots.map((s) => {
+          if (normalizeTime(s.Time) !== normalizedSlotTime) {
+            return { Time: s.Time, availableSeats: String(s.availableSeats) };
+          }
+          return { Time: s.Time, availableSeats: String(newSeats) };
+        }),
       };
-    }
-    return {
-      __component: "trip.schedule",
-      Date: component.Date,
-      Slots: component.Slots.map((s) => {
-        if (normalizeTime(s.Time) !== normalizedSlotTime) {
-          return { Time: s.Time, availableSeats: String(s.availableSeats) };
-        }
-        return { Time: s.Time, availableSeats: String(newSeats) };
-      }),
-    };
-  });
+    },
+  );
 
   await strapi.documents("api::trip.trip").update({
     documentId: trip.documentId,
@@ -108,9 +92,7 @@ async function reduceGroupTourSeats(strapi, booking) {
   );
 }
 
-// ---------------------------------------------------------------------------
 // SEAT REDUCTION — PUBLIC EVENT (simple, no discount)
-// ---------------------------------------------------------------------------
 async function reducePublicSeats(
   strapi,
   tourSlug,
@@ -184,9 +166,7 @@ async function reducePublicSeats(
     .publish({ documentId: activity.documentId });
 }
 
-// ---------------------------------------------------------------------------
 // SEAT REDUCTION — PUBLIC WALK (with student/senior discount quota)
-// ---------------------------------------------------------------------------
 async function reduceWalkSeats(strapi, walkBooking) {
   const activities = await strapi
     .documents("api::public-walk-and-event.public-walk-and-event")
@@ -241,10 +221,15 @@ async function reduceWalkSeats(strapi, walkBooking) {
         (p) => p?.category === "student" || p?.category === "senior",
       ).length;
 
-      const currentDiscountUsed = Number(component.Slots.discountUsedCount || 0);
+      const currentDiscountUsed = Number(
+        component.Slots.discountUsedCount || 0,
+      );
       const maxDiscount = 3;
       const remainingDiscount = Math.max(0, maxDiscount - currentDiscountUsed);
-      const appliedDiscount = Math.min(discountEligibleCount, remainingDiscount);
+      const appliedDiscount = Math.min(
+        discountEligibleCount,
+        remainingDiscount,
+      );
 
       return {
         __component: "walk-event-trip.booking-slots",
@@ -282,9 +267,8 @@ async function reduceWalkSeats(strapi, walkBooking) {
     .publish({ documentId: activity.documentId });
 }
 
-// ---------------------------------------------------------------------------
 // EMAIL — pick the right template per booking type
-// ---------------------------------------------------------------------------
+
 async function sendConfirmationEmail(strapi, uid, record, txnid) {
   if (uid === EVENT) {
     // Online (talk) vs Offline (event) template chosen inside.
@@ -298,10 +282,7 @@ async function sendConfirmationEmail(strapi, uid, record, txnid) {
     html: userEmail({ ...record, txnid }),
   });
 }
-
-// ---------------------------------------------------------------------------
 // SEAT REDUCTION dispatcher (per booking type, under the right lock)
-// ---------------------------------------------------------------------------
 async function reduceSeats(strapi, uid, record) {
   if (uid === BOOKING) {
     await runWithLock(`trip:${record.tourSlug}`, () =>
@@ -332,13 +313,11 @@ async function reduceSeats(strapi, uid, record) {
 }
 
 /**
- * Run the "paid" side effects (email + seats) exactly once for a booking.
- *
- * @param {object} strapi     global strapi
- * @param {string} uid        content-type uid (BOOKING | EVENT | WALK)
- * @param {string} bookingId  the booking's uid field value
- * @param {object} [opts]     { txnid } — PayU txn id for the email (auto path)
- * @returns {Promise<boolean>} true if this call did the work, false if skipped
+ * @param {object} strapi
+ * @param {string} uid
+ * @param {string} bookingId
+ * @param {object} [opts]
+ * @returns {Promise<boolean>}
  */
 async function confirmBookingOnce(strapi, uid, bookingId, opts = {}) {
   if (!bookingId) return false;
@@ -352,21 +331,17 @@ async function confirmBookingOnce(strapi, uid, bookingId, opts = {}) {
   // Fast skip if already handled.
   if (record.confirmationEmailSent) return false;
 
-  // ATOMIC CLAIM — only the caller that flips !true -> true proceeds. This is
-  // the at-most-once guard shared by the auto (PayU) and manual (admin) paths.
   const { count } = await strapi.db.query(uid).updateMany({
     where: { bookingId, confirmationEmailSent: { $ne: true } },
     data: { confirmationEmailSent: true },
   });
   if (count === 0) return false; // someone else already claimed it
 
-  // Email — failure must not throw. If SMTP fails the flag stays set, so the
-  // customer won't be double-mailed; an admin can un-check
-  // `confirmationEmailSent` in the panel to resend.
   try {
     await sendConfirmationEmail(strapi, uid, record, opts.txnid);
   } catch (emailErr) {
     strapi.log.error(
+      // @ts-ignore
       `[confirmBooking] Email failed for ${bookingId}: ${emailErr.message}`,
     );
   }
@@ -376,6 +351,7 @@ async function confirmBookingOnce(strapi, uid, bookingId, opts = {}) {
     await reduceSeats(strapi, uid, record);
   } catch (seatErr) {
     strapi.log.error(
+      // @ts-ignore
       `[confirmBooking] Seat reduction failed for ${bookingId}: ${seatErr.message}`,
     );
   }
@@ -383,4 +359,12 @@ async function confirmBookingOnce(strapi, uid, bookingId, opts = {}) {
   return true;
 }
 
-module.exports = { confirmBookingOnce, BOOKING, EVENT, WALK };
+module.exports = {
+  confirmBookingOnce,
+  reduceGroupTourSeats,
+  reducePublicSeats,
+  reduceWalkSeats,
+  BOOKING,
+  EVENT,
+  WALK,
+};

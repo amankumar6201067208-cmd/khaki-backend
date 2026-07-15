@@ -3,103 +3,8 @@
 const {
   sendEventConfirmation,
 } = require("../../../utils/sendEventConfirmation");
-
-const reducePublicSeats = async (
-  tourSlug,
-  dateString,
-  slotTime,
-  ticketsToReduce,
-) => {
-  if (!tourSlug) return;
-
-  const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
-  const normalizedSlotTime = normalizeTime(slotTime);
-
-  const activities = await strapi
-    .documents("api::public-walk-and-event.public-walk-and-event")
-    .findMany({
-      filters: { Slug: tourSlug },
-      populate: {
-        BookingSlots: { populate: { Slots: true } },
-      },
-      status: "published",
-    });
-
-  const activity = activities?.[0];
-
-  if (activity && activity.BookingSlots) {
-    const bookingDate = new Date(dateString).toDateString();
-
-    const updatedBookingSlots = activity.BookingSlots.map((component) => {
-      // If date not match → keep same
-      if (new Date(component.TourDate).toDateString() !== bookingDate) {
-        return {
-          __component: "walk-event-trip.booking-slots",
-          TourDate: component.TourDate,
-          Slots: component.Slots
-            ? {
-                TourTime: component.Slots.TourTime,
-                availableTickets: String(component.Slots.availableTickets),
-              }
-            : null,
-        };
-      }
-
-      // If slot match → reduce seats
-      if (
-        component.Slots &&
-        normalizeTime(component.Slots.TourTime) === normalizedSlotTime
-      ) {
-        const currentSeats = Number(component.Slots.availableTickets);
-        const newSeats = Math.max(0, currentSeats - ticketsToReduce);
-
-        console.log(` Free booking seat reduce: ${currentSeats} → ${newSeats}`);
-
-        return {
-          __component: "walk-event-trip.booking-slots",
-          TourDate: component.TourDate,
-          Slots: {
-            TourTime: component.Slots.TourTime,
-            availableTickets: String(newSeats),
-          },
-        };
-      }
-
-      // Default return
-      return {
-        __component: "walk-event-trip.booking-slots",
-        TourDate: component.TourDate,
-        Slots: component.Slots
-          ? {
-              TourTime: component.Slots.TourTime,
-              availableTickets: String(component.Slots.availableTickets),
-            }
-          : null,
-      };
-    });
-
-    //  Update + Publish
-    await strapi
-      .documents("api::public-walk-and-event.public-walk-and-event")
-      .update({
-        documentId: activity.documentId,
-        data: {
-          // @ts-ignore
-          BookingSlots: updatedBookingSlots,
-        },
-      });
-
-    await strapi
-      .documents("api::public-walk-and-event.public-walk-and-event")
-      .publish({
-        documentId: activity.documentId,
-      });
-
-    console.log(" Free booking seats updated & published");
-  } else {
-    console.warn(" No activity found for slug:", tourSlug);
-  }
-};
+// Reduction algorithm lives in one place; the free-booking flow reuses it.
+const { reducePublicSeats } = require("../../../utils/confirmBooking");
 
 // CONTROLLER
 module.exports = {
@@ -152,6 +57,7 @@ module.exports = {
           );
 
           await reducePublicSeats(
+            strapi,
             booking.tourSlug,
             booking.date,
             booking.slot,

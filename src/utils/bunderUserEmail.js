@@ -1,6 +1,5 @@
 const { buildEmail } = require("./emailBase");
 
-// Bunder Room booking-request confirmation (sent from khakilabevents@gmail.com).
 module.exports = (data = {}) =>
   buildEmail({
     greeting: `Dear ${data.name || ""}`.trim(),

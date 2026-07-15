@@ -80,8 +80,6 @@ module.exports = {
         );
       }
 
-      //  ATOMIC IDEMPOTENCY GUARD — only one call wins the paid-flip; the
-      // email + seat reduction then run exactly once via confirmBookingOnce.
       const { count } = await strapi.db.query(EVENT).updateMany({
         where: { bookingId, Bookingstatus: { $ne: "paid" } },
         data: { Bookingstatus: "paid" },
@@ -98,9 +96,7 @@ module.exports = {
       ctx.throw(500, "Event verification failed");
     }
   },
-
   // EVENT PAYMENT FAILURE
-  // Mark failed but never overwrite an already-paid booking. No email sent.
   async failure(ctx) {
     try {
       const bookingId = ctx.request.body.udf1;

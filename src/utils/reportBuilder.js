@@ -142,10 +142,19 @@ function toCsv(rows, columns) {
   return `${header}\r\n${body}`;
 }
 
-/** Build Strapi filters for a single report type from the query params. */
+/**
+ * @param {object} typeConfig
+ * @param {object} [params]
+ * @param {string} [params.tour]
+ * @param {string} [params.status]
+ * @param {string} [params.slot]
+ * @param {string} [params.dateFrom]
+ * @param {string} [params.dateTo]
+ * @param {string} [params.dateField]
+ */
 function buildFilters(
   typeConfig,
-  { tour, status, slot, dateFrom, dateTo, dateField },
+  { tour, status, slot, dateFrom, dateTo, dateField } = {},
 ) {
   const filters = {};
   const and = [];
@@ -177,9 +186,6 @@ function buildFilters(
 }
 
 /**
- * Distinct, non-empty `slot` values across the booking types that have slots,
- * honouring the same tour/date filters. Powers the "Time slot" dropdown so the
- * admin can pick from the slots that actually exist for a date.
  * @param {object} strapi
  * @param {object} query - { type, tour, dateFrom, dateTo, dateField }
  * @returns {Promise<string[]>}
@@ -226,9 +232,6 @@ async function distinctSlots(strapi, query) {
 }
 
 /**
- * Distinct tour dates (YYYY-MM-DD, newest first) for a tour, across the booking
- * types that have a `date`. Powers the "Tour date" dropdown so the admin picks
- * from dates that actually have bookings.
  * @param {object} strapi
  * @param {object} query - { type, tour }
  * @returns {Promise<string[]>}
@@ -240,8 +243,6 @@ async function distinctDates(strapi, query) {
 
   for (const key of keys) {
     const cfg = TYPES[key];
-    // Use the type's own date field (date / preferredDate). Skip donation,
-    // whose date field is createdAt (not a tour date to pick from).
     if (!cfg || !cfg.dateField || cfg.dateField === "createdAt") continue;
     const dateField = cfg.dateField;
 
@@ -272,8 +273,6 @@ async function distinctDates(strapi, query) {
 }
 
 /**
- * Count bookings by status for the current tour/date/slot filters, so the
- * "Status" dropdown can show which statuses exist and how many of each.
  * @param {object} strapi
  * @param {object} query - { type, tour, slot, dateFrom, dateTo, dateField }
  * @returns {Promise<Array<{ status: string, count: number }>>}

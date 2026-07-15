@@ -3,7 +3,6 @@
 const locks = new Map();
 
 /**
- *
  * @template T
  * @param {string} key
  * @param {() => Promise<T>} task
@@ -34,9 +33,7 @@ async function runWithLock(key, task) {
     release();
     // Clean up the map if no one else queued behind us.
     if (locks.get(key) === previous.then(() => current)) {
-      // (Best-effort cleanup; safe to skip if a newer task already chained on.)
     }
-    // Prevent unbounded growth: if the current tail resolved, drop the entry.
     Promise.resolve().then(() => {
       const tail = locks.get(key);
       if (!tail) return;

@@ -14,8 +14,6 @@ import {
 } from "@strapi/design-system";
 import { Download } from "@strapi/icons";
 
-// Which content-type maps to which report type. The button only appears on
-// these collections; on any other list view it renders nothing.
 const MODEL_TO_TYPE = {
   "api::booking.booking": "group",
   "api::public-walk-booking.public-walk-booking": "walk",
@@ -32,24 +30,25 @@ const LABELS = {
   private: "Private Tour",
 };
 
-// Types that use the guided tour → date → slot flow, with per-type labels.
-// (Private uses preferred date + start time; it has no payment status.)
 const GUIDED = {
   group: {
     dateLabel: "Tour date",
-    dateHelp: "The tour date (the day the tour runs), loaded from actual bookings.",
+    dateHelp:
+      "The tour date (the day the tour runs), loaded from actual bookings.",
     slotLabel: "Time slot",
     slotHelp: "The time slot on the selected date.",
   },
   walk: {
     dateLabel: "Tour date",
-    dateHelp: "The tour date (the day the walk runs), loaded from actual bookings.",
+    dateHelp:
+      "The tour date (the day the walk runs), loaded from actual bookings.",
     slotLabel: "Time slot",
     slotHelp: "The time slot on the selected date.",
   },
   event: {
     dateLabel: "Tour date",
-    dateHelp: "The tour date (the day the event runs), loaded from actual bookings.",
+    dateHelp:
+      "The tour date (the day the event runs), loaded from actual bookings.",
     slotLabel: "Time slot",
     slotHelp: "The time slot on the selected date.",
   },
@@ -111,15 +110,11 @@ const ReportExportButton = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Guided flow (tour → date → slot). Group/Walk/Event use tour date + time
-  // slot; Private uses preferred date + start time. Donation uses neither.
   const guided = type ? GUIDED[type] : null;
   const showGuided = !!guided;
   const showTour = type !== "donation";
   const showStatus = type !== "private";
 
-  // Build the date/slot query params for the current selection (shared by the
-  // status fetch and the export).
   const dateSlotParams = (params) => {
     if (showGuided) {
       if (selectedDate) {
@@ -136,8 +131,6 @@ const ReportExportButton = () => {
     return params;
   };
 
-  // Step 1 → 2: when the tour changes, load the dates that actually have
-  // bookings for it so the admin picks from a real list.
   useEffect(() => {
     if (!open || !showGuided) return;
     const params = new URLSearchParams();
@@ -192,8 +185,6 @@ const ReportExportButton = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, showGuided, type, tour, selectedDate]);
 
-  // Final step: count bookings per status for the current tour/date/slot, so
-  // the Status dropdown shows what exists and how many of each.
   useEffect(() => {
     if (!open || !showStatus) return;
     const params = new URLSearchParams();
@@ -281,11 +272,7 @@ const ReportExportButton = () => {
             <Modal.Body>
               <Flex direction="column" alignItems="stretch" gap={4}>
                 {/* Overall explanation */}
-                <Box
-                  background="neutral100"
-                  padding={3}
-                  hasRadius
-                >
+                <Box background="neutral100" padding={3} hasRadius>
                   <Typography variant="omega" textColor="neutral700">
                     {showGuided
                       ? `Download a CSV of these bookings. Filter step by step: type a tour, then pick a ${guided.dateLabel.toLowerCase()}, then a ${guided.slotLabel.toLowerCase()}. Leave any filter empty to include everything.`
@@ -401,15 +388,14 @@ const ReportExportButton = () => {
                 {showStatus && (
                   <Box>
                     <Help>
-                      Booking status for the current filters above. The number in
-                      brackets is how many bookings have that status.
+                      Booking status for the current filters above. The number
+                      in brackets is how many bookings have that status.
                     </Help>
                     <FieldLabel>Status</FieldLabel>
                     <Box paddingTop={1}>
                       <SingleSelect
                         value={status}
                         onChange={(v) => setStatus(String(v))}
-
                         disabled={statusLoading}
                       >
                         <SingleSelectOption value="">
@@ -417,7 +403,8 @@ const ReportExportButton = () => {
                         </SingleSelectOption>
                         {statusOptions.map((o) => (
                           <SingleSelectOption key={o.status} value={o.status}>
-                            {o.status.charAt(0).toUpperCase() + o.status.slice(1)}{" "}
+                            {o.status.charAt(0).toUpperCase() +
+                              o.status.slice(1)}{" "}
                             ({o.count})
                           </SingleSelectOption>
                         ))}

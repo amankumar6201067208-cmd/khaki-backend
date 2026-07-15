@@ -114,7 +114,6 @@ module.exports = {
         ` Calculate: slug=${tourSlug}, discountUsed=${currentDiscountUsed}, remaining=${maxDiscount - currentDiscountUsed}, total=₹${totalAmount}`
       );
 
-      // remainingDiscountQuota frontend ko bhejo — UI real-time quota dikhayega
       const finalRemainingQuota = Math.max(0, maxDiscount - currentDiscountUsed);
       return ctx.send({ totalAmount, remainingDiscountQuota: finalRemainingQuota });
     } catch (error) {

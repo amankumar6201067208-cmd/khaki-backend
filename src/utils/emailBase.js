@@ -1,6 +1,5 @@
 "use strict";
 
-/** Escape a value for safe insertion into HTML. */
 const esc = (v) =>
   String(v ?? "")
     .replace(/&/g, "&amp;")
