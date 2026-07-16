@@ -13,7 +13,7 @@ module.exports = (data) => {
 
       <p><b>Amount:</b> ₹ ${data.totalAmount}</p>
 
-      <p><b>Transaction No:</b> ${data.txnid || data.bookingId}</p>
+      <p><b>Booking ID:</b> ${data.bookingId}</p>
 
       <br/>
 

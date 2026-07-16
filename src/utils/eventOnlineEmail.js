@@ -18,6 +18,7 @@ module.exports = (data = {}) => {
       "Your registration details are as follows:",
     ],
     formRows: [
+      ["Booking ID", data.bookingId],
       ["Name", data.contactName],
       ["Email", data.contactEmail],
       ["Phone", data.contactPhone],

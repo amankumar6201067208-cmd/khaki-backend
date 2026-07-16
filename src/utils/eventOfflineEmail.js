@@ -31,6 +31,7 @@ module.exports = (data = {}) => {
     greeting: `Dear ${data.contactName || ""}`.trim(),
     intro,
     formRows: [
+      ["Booking ID", data.bookingId],
       ["Name", data.contactName],
       ["Email", data.contactEmail],
       ["Phone", data.contactPhone],

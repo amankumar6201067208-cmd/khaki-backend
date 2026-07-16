@@ -24,6 +24,7 @@ module.exports = {
             contactName: data.contact.name,
             contactEmail: data.contact.email,
             contactPhone: data.contact.phone,
+            CountryCode: data.contact.countryCode,
 
             passengers: data.passengers,
 

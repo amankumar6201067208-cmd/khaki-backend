@@ -53,17 +53,7 @@
       ]
     },
     "Duration": {
-      "type": "string",
-      "conditions": {
-        "visible": {
-          "!=": [
-            {
-              "var": "EventType"
-            },
-            "Online"
-          ]
-        }
-      }
+      "type": "string"
     },
     "Distance": {
       "type": "string",

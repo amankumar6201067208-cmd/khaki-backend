@@ -481,6 +481,7 @@ export interface ApiBookingBooking extends Struct.CollectionTypeSchema {
     contactEmail: Schema.Attribute.Email;
     contactName: Schema.Attribute.String;
     contactPhone: Schema.Attribute.String;
+    CountryCode: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -747,6 +748,7 @@ export interface ApiPublicEventBookingPublicEventBooking
     contactEmail: Schema.Attribute.Email;
     contactName: Schema.Attribute.String;
     contactPhone: Schema.Attribute.String;
+    CountryCode: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -838,6 +840,7 @@ export interface ApiPublicWalkBookingPublicWalkBooking
     contactEmail: Schema.Attribute.Email;
     contactName: Schema.Attribute.String;
     contactPhone: Schema.Attribute.String;
+    CountryCode: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

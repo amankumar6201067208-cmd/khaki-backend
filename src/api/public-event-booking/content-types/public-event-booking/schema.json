@@ -59,6 +59,9 @@
     },
     "startingPoint": {
       "type": "string"
+    },
+    "CountryCode": {
+      "type": "string"
     }
   }
 }
