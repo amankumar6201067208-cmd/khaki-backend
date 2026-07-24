@@ -2,6 +2,7 @@
 const crypto = require("crypto");
 const {
   confirmBookingOnce,
+  findBooking,
   BOOKING,
   EVENT,
   WALK,
@@ -10,8 +11,14 @@ const {
 module.exports = {
   async create(ctx) {
     try {
-      const { amount, firstname, email, phone, productinfo, bookingId } =
+      const { firstname, email, phone, productinfo, bookingId } =
         ctx.request.body;
+
+      const found = await findBooking(strapi, bookingId);
+      if (!found) {
+        return ctx.badRequest("Unknown booking");
+      }
+      const amount = Number(found.record.totalAmount || 0).toFixed(2);
 
       const key = process.env.PAYU_KEY;
       const salt = process.env.PAYU_SALT;
@@ -42,9 +49,6 @@ module.exports = {
     }
   },
 
-  // PAYMENT SUCCESS
-  // PayU POSTs here (surl). We verify the hash, flip status -> paid atomically,
-  // then let confirmBookingOnce() do the email + seat reduction exactly once.
   async success(ctx) {
     try {
       const response = ctx.request.body;
@@ -139,9 +143,6 @@ module.exports = {
     }
   },
 
-  // PAYMENT FAILURE
-  // Mark the booking failed — but NEVER overwrite an already-paid booking (a
-  // late/duplicate furl must not undo a real success). No email is ever sent.
   async failure(ctx) {
     try {
       const response = ctx.request.body;

@@ -1,13 +1,26 @@
 "use strict";
 
+const { calcWalkAmount } = require("../../../utils/pricing");
+
 module.exports = {
   async create(ctx) {
     try {
       const data = ctx.request.body;
 
       const bookingId = "PWB" + Date.now();
+      
+      const passengers = Array.isArray(data.passengers) ? data.passengers : [];
+      const tickets = passengers.length || Number(data.tickets) || 1;
 
-      const isFree = Number(data.totalAmount) === 0;
+
+      const { totalAmount } = await calcWalkAmount(strapi, {
+        tourSlug: data.tourSlug,
+        date: data.date,
+        slot: data.slot,
+        participants: passengers,
+      });
+
+      const isFree = Number(totalAmount) === 0;
 
       const booking = await strapi.entityService.create(
         "api::public-walk-booking.public-walk-booking",
@@ -17,8 +30,8 @@ module.exports = {
             tourSlug: data.tourSlug.toLowerCase(),
             date: data.date,
             slot: data.slot,
-            tickets: data.tickets,
-            totalAmount: data.totalAmount,
+            tickets,
+            totalAmount,
             tourTitle: data.tourTitle,
             startingPoint: data.startingPoint,
             contactName: data.contact.name,
@@ -26,7 +39,7 @@ module.exports = {
             contactPhone: data.contact.phone,
             CountryCode: data.contact.countryCode,
 
-            passengers: data.passengers,
+            passengers,
 
             Bookingstatus: isFree ? "confirmed" : "pending",
           },
@@ -51,72 +64,18 @@ module.exports = {
 
   async calculate(ctx) {
     try {
-      const { tourSlug, date, slot, participants, pricePerPerson } =
-        ctx.request.body;
+      const { tourSlug, date, slot, participants } = ctx.request.body;
 
       if (!tourSlug || !date || !slot || !participants?.length) {
         return ctx.badRequest("Missing required fields");
       }
 
-      const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
-      const normalizedSlotTime = normalizeTime(slot);
-      const bookingDate = new Date(date).toDateString();
-
-      // Fresh fetch — hamesha latest discountUsedCount milega
-      const activities = await strapi
-        .documents("api::public-walk-and-event.public-walk-and-event")
-        .findMany({
-          filters: { Slug: tourSlug },
-          populate: {
-            BookingSlots: { populate: { Slots: true } },
-          },
-          status: "published",
-        });
-
-      const activity = activities?.[0];
-
-      let currentDiscountUsed = 0;
-      const maxDiscount = 3;
-
-      if (activity?.BookingSlots) {
-        const matchingSchedule = activity.BookingSlots.find(
-          (c) => new Date(c.TourDate).toDateString() === bookingDate
-        );
-
-        if (matchingSchedule?.Slots) {
-          const isMatchingSlot =
-            normalizeTime(matchingSchedule.Slots.TourTime) === normalizedSlotTime;
-
-          if (isMatchingSlot) {
-            //  Fresh value from DB — refresh karo ya na karo, sahi milega
-            currentDiscountUsed = Number(matchingSchedule.Slots.discountUsedCount || 0);
-          }
-        }
-      }
-
-      // Real remaining discount quota
-      let remainingDiscount = Math.max(0, maxDiscount - currentDiscountUsed);
-      let totalAmount = 0;
-
-      for (const p of participants) {
-        const price = Number(pricePerPerson) || 0;
-        const isEligible =
-          p?.category === "student" || p?.category === "senior";
-
-        if (isEligible && remainingDiscount > 0) {
-          totalAmount += price - (price * 25) / 100; // 25% discount
-          remainingDiscount--;
-        } else {
-          totalAmount += price;
-        }
-      }
-
-      console.log(
-        ` Calculate: slug=${tourSlug}, discountUsed=${currentDiscountUsed}, remaining=${maxDiscount - currentDiscountUsed}, total=₹${totalAmount}`
+      const { totalAmount, remainingDiscountQuota } = await calcWalkAmount(
+        strapi,
+        { tourSlug, date, slot, participants },
       );
 
-      const finalRemainingQuota = Math.max(0, maxDiscount - currentDiscountUsed);
-      return ctx.send({ totalAmount, remainingDiscountQuota: finalRemainingQuota });
+      return ctx.send({ totalAmount, remainingDiscountQuota });
     } catch (error) {
       console.error("=== CALCULATE ERROR ===", error);
       ctx.throw(500, "Calculation failed");

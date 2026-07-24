@@ -5,6 +5,7 @@ const {
 } = require("../../../utils/sendEventConfirmation");
 // Reduction algorithm lives in one place; the free-booking flow reuses it.
 const { reducePublicSeats } = require("../../../utils/confirmBooking");
+const { calcEventAmount } = require("../../../utils/pricing");
 
 // CONTROLLER
 module.exports = {
@@ -13,7 +14,16 @@ module.exports = {
       const data = ctx.request.body;
 
       const bookingId = "PEB" + Date.now();
-      const isFree = Number(data.totalAmount) === 0;
+
+      const passengers = Array.isArray(data.passengers) ? data.passengers : [];
+      const tickets = passengers.length || Number(data.tickets) || 1;
+
+      const totalAmount = await calcEventAmount(strapi, {
+        tourSlug: data.tourSlug,
+        tickets,
+      });
+
+      const isFree = Number(totalAmount) === 0;
 
       // CREATE BOOKING
 
@@ -25,15 +35,15 @@ module.exports = {
             tourSlug: data.tourSlug.toLowerCase(),
             date: data.date,
             slot: data.slot,
-            tickets: data.tickets,
-            totalAmount: data.totalAmount,
+            tickets,
+            totalAmount,
             tourTitle: data.tourTitle,
             startingPoint: data.startingPoint,
             contactName: data.contact.name,
             contactEmail: data.contact.email,
             contactPhone: data.contact.phone,
             CountryCode: data.contact.countryCode,
-            passengers: data.passengers,
+            passengers,
 
             // FREE → confirmed | PAID → pending
             Bookingstatus: isFree ? "confirmed" : "pending",

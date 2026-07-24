@@ -1,14 +1,25 @@
 "use strict";
 
 const crypto = require("crypto");
-const { confirmBookingOnce, EVENT } = require("../../../utils/confirmBooking");
+const {
+  confirmBookingOnce,
+  findBooking,
+  EVENT,
+} = require("../../../utils/confirmBooking");
 
 module.exports = {
   // CREATE EVENT PAYMENT
   async create(ctx) {
     try {
-      const { amount, firstname, email, phone, productinfo, bookingId } =
+      const { firstname, email, phone, productinfo, bookingId } =
         ctx.request.body;
+
+      const found = await findBooking(strapi, bookingId);
+      if (!found) {
+        return ctx.badRequest("Unknown booking");
+      }
+      const amount = Number(found.record.totalAmount || 0).toFixed(2);
+
       //  SEPARATE PAYU ACCOUNT FOR EVENTS.
       const key = process.env.EVENT_PAYU_KEY || process.env.PAYU_KEY;
       const salt = process.env.EVENT_PAYU_SALT || process.env.PAYU_SALT;

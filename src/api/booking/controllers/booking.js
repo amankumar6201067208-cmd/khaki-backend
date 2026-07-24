@@ -1,16 +1,23 @@
 "use strict";
 
+const { calcGroupTourAmount } = require("../../../utils/pricing");
+
 module.exports = {
 
   async createBooking(ctx) {
     try {
-      
+
       const data = ctx.request.body;
-       console.log (data, "data of booking");
+
+      const totalAmount = await calcGroupTourAmount(strapi, {
+        tourSlug: data.tourSlug,
+        tickets: data.tickets,
+      });
+
       const booking = await strapi.entityService.create(
 
         "api::booking.booking",
-        
+
         {
           data: {
             bookingId: "BK" + Date.now(),
@@ -20,7 +27,7 @@ module.exports = {
             tickets: data.tickets,
             tourTitle: data.tourTitle,
             startingPoint: data.startingPoint,
-            totalAmount: data.totalAmount,
+            totalAmount,
             contactName: data.contact.name,
             contactEmail: data.contact.email,
             contactPhone: data.contact.phone,

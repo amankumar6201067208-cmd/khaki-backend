@@ -359,8 +359,23 @@ async function confirmBookingOnce(strapi, uid, bookingId, opts = {}) {
   return true;
 }
 
+/**
+ * Find a booking by its bookingId across the three booking types.
+ * Used by the payment controllers to read the authoritative stored amount.
+ * @returns {Promise<{ uid: string, record: object } | null>}
+ */
+async function findBooking(strapi, bookingId) {
+  if (!bookingId) return null;
+  for (const uid of [BOOKING, EVENT, WALK]) {
+    const record = await strapi.db.query(uid).findOne({ where: { bookingId } });
+    if (record) return { uid, record };
+  }
+  return null;
+}
+
 module.exports = {
   confirmBookingOnce,
+  findBooking,
   reduceGroupTourSeats,
   reducePublicSeats,
   reduceWalkSeats,
