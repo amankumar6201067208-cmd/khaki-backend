@@ -58,7 +58,7 @@
       ]
     },
     "publishDate": {
-      "type": "date"
+      "type": "datetime"
     },
     "Description": {
       "type": "blocks"

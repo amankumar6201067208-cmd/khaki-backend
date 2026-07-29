@@ -933,7 +933,7 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     Note: Schema.Attribute.Blocks;
     Price: Schema.Attribute.BigInteger;
     priceType: Schema.Attribute.String;
-    publishDate: Schema.Attribute.Date;
+    publishDate: Schema.Attribute.DateTime;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.UID<'Title'> & Schema.Attribute.Required;
     startingPoint: Schema.Attribute.Component<'trip.starting-point', false>;
