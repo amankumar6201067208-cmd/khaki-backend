@@ -792,6 +792,7 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    CutOffTime: Schema.Attribute.Integer;
     Description: Schema.Attribute.Blocks;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
@@ -807,7 +808,7 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
       'api::public-walk-and-event.public-walk-and-event'
     > &
       Schema.Attribute.Private;
-    Note: Schema.Attribute.Text;
+    Note: Schema.Attribute.Blocks;
     Price: Schema.Attribute.BigInteger;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.UID<'Title'> & Schema.Attribute.Required;
@@ -915,6 +916,7 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    CutOffTime: Schema.Attribute.Integer & Schema.Attribute.Required;
     Description: Schema.Attribute.Blocks;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;

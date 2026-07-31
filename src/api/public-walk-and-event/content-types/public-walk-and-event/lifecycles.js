@@ -12,12 +12,8 @@ function validate(eventType, price) {
 
   const p = Number(price || 0);
 
-  if (eventType === OFFLINE && p === 0) {
-    throw new ValidationError(
-      "An Offline event's Price cannot be 0 — please enter a valid price.",
-    );
-  }
-
+  // Offline events may be free (price 0 → direct booking, no gateway) or paid
+  // (any value → gateway). Only the Online rule below remains.
   if (eventType === ONLINE && p !== 0) {
     throw new ValidationError("An Online event's Price must be 0.");
   }

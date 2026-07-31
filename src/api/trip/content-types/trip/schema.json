@@ -127,6 +127,10 @@
       "components": [
         "private-tours.booking-form-details"
       ]
+    },
+    "CutOffTime": {
+      "type": "integer",
+      "required": true
     }
   }
 }

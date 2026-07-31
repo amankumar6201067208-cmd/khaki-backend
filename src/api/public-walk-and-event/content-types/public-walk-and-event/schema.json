@@ -24,9 +24,6 @@
       "type": "blocks",
       "required": false
     },
-    "Note": {
-      "type": "text"
-    },
     "TourType": {
       "type": "enumeration",
       "required": true,
@@ -107,6 +104,12 @@
         "trip.starting-point"
       ],
       "required": false
+    },
+    "Note": {
+      "type": "blocks"
+    },
+    "CutOffTime": {
+      "type": "integer"
     }
   }
 }
