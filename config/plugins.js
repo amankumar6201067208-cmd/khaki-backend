@@ -1,25 +1,13 @@
 module.exports = ({ env }) => ({
 
-  ...(env("CLOUDINARY_NAME")
-    ? {
-        upload: {
-          config: {
-            provider: "cloudinary",
-            providerOptions: {
-              cloud_name: env("CLOUDINARY_NAME"),
-              api_key: env("CLOUDINARY_KEY"),
-              api_secret: env("CLOUDINARY_SECRET"),
-            },
-            actionOptions: {
-              upload: {},
-              uploadStream: {},
-              delete: {},
-            },
-            breakpoints: {},
-          },
-        },
-      }
-    : {}),
+  // Images are stored on the local disk (public/uploads) — the Strapi default
+  // local provider. Cloudinary has been removed. `sizeLimit` is generous for
+  // large tour photos.
+  upload: {
+    config: {
+      sizeLimit: 50 * 1024 * 1024, // 50 MB
+    },
+  },
 
   email: {
     config: {

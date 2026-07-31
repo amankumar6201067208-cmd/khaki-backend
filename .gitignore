@@ -1,5 +1,5 @@
 node_modules
-
+public
 # Strapi data transfer backups
 *.tar.gz
 exports/
