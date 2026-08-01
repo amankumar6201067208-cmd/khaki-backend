@@ -6,6 +6,7 @@ const {
   distinctDates,
   statusCounts,
 } = require("../../../../utils/reportBuilder");
+const { getAnalytics } = require("../../../../utils/analytics");
 
 module.exports = ({ strapi }) => ({
   async export(ctx) {
@@ -48,6 +49,16 @@ module.exports = ({ strapi }) => ({
     try {
       const statuses = await statusCounts(strapi, ctx.query);
       ctx.body = { statuses };
+    } catch (err) {
+      // @ts-ignore
+      return ctx.throw(err.status || 500, err.message);
+    }
+  },
+
+  // Dashboard analytics for the admin homepage chart widgets.
+  async analytics(ctx) {
+    try {
+      ctx.body = await getAnalytics(strapi);
     } catch (err) {
       // @ts-ignore
       return ctx.throw(err.status || 500, err.message);

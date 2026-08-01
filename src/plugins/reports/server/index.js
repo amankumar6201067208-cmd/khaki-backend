@@ -33,6 +33,12 @@ module.exports = {
           handler: "report.statuses",
           config: { policies: [] },
         },
+        {
+          method: "GET",
+          path: "/analytics",
+          handler: "report.analytics",
+          config: { policies: [] },
+        },
       ],
     },
   },
