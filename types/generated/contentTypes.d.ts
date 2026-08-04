@@ -800,14 +800,16 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
         },
         number
       >;
-    Description: Schema.Attribute.Blocks;
+    Description: Schema.Attribute.Blocks & Schema.Attribute.Required;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
-    EventType: Schema.Attribute.Enumeration<['Online', 'Ofline']>;
+    EventType: Schema.Attribute.Enumeration<['Online', 'Ofline']> &
+      Schema.Attribute.Required;
     FeatureImages: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
-    >;
+    > &
+      Schema.Attribute.Required;
     Highlights: Schema.Attribute.Component<'trip.highlight', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -816,7 +818,7 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
     > &
       Schema.Attribute.Private;
     Note: Schema.Attribute.Blocks;
-    Price: Schema.Attribute.BigInteger;
+    Price: Schema.Attribute.BigInteger & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.UID<'Title'> & Schema.Attribute.Required;
     StartingPoint: Schema.Attribute.DynamicZone<['trip.starting-point']>;
@@ -931,29 +933,31 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
         },
         number
       >;
-    Description: Schema.Attribute.Blocks;
+    Description: Schema.Attribute.Blocks & Schema.Attribute.Required;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
     featureImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
-    >;
+    > &
+      Schema.Attribute.Required;
     GroupTourBookingDetails: Schema.Attribute.DynamicZone<['trip.schedule']>;
     highlight: Schema.Attribute.Component<'trip.highlight', true>;
     Images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
-    >;
+    > &
+      Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::trip.trip'> &
       Schema.Attribute.Private;
     Note: Schema.Attribute.Blocks;
-    Price: Schema.Attribute.BigInteger;
-    priceType: Schema.Attribute.String;
-    publishDate: Schema.Attribute.DateTime;
+    Price: Schema.Attribute.BigInteger & Schema.Attribute.Required;
+    priceType: Schema.Attribute.String & Schema.Attribute.Required;
+    publishDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.UID<'Title'> & Schema.Attribute.Required;
     startingPoint: Schema.Attribute.Component<'trip.starting-point', false>;
-    Tag: Schema.Attribute.String;
+    Tag: Schema.Attribute.String & Schema.Attribute.Required;
     Title: Schema.Attribute.String & Schema.Attribute.Required;
     tripCategory: Schema.Attribute.Enumeration<
       [

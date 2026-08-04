@@ -88,9 +88,9 @@ const MonthPicker = ({ months, activeKey, onChange, disabled }) => (
   </Flex>
 );
 
-// Per-type "Top 5 tours by bookings" with a month dropdown.
-// `typeKey` reads data.byType[typeKey][monthKey] → [{tour, count}].
-const TopBookingsByType = ({ typeKey, color }) => {
+// Per-type "Top 5 tours" with a month dropdown.
+// `metric` = "bookings" | "revenue"; reads data.byType[typeKey][monthKey].
+const TopByType = ({ typeKey, metric, color }) => {
   const { data, loading, error } = useAnalytics();
   const months = data?.months || [];
   const [selected, setSelected] = useState(null);
@@ -98,7 +98,15 @@ const TopBookingsByType = ({ typeKey, color }) => {
   // Default to the latest month (last entry) once data arrives.
   const latestKey = months.length ? months[months.length - 1].key : null;
   const activeKey = selected || latestKey;
-  const rows = (activeKey && data?.byType?.[typeKey]?.[activeKey]) || [];
+  const bucket = (activeKey && data?.byType?.[typeKey]?.[activeKey]) || null;
+
+  const isRevenue = metric === "revenue";
+  const rows = bucket
+    ? isRevenue
+      ? bucket.topByRevenue
+      : bucket.topByBookings
+    : [];
+  const dataKey = isRevenue ? "revenue" : "count";
 
   return (
     <Flex direction="column" alignItems="stretch" gap={2}>
@@ -112,7 +120,9 @@ const TopBookingsByType = ({ typeKey, color }) => {
         loading={loading}
         error={error}
         empty={!rows.length}
-        emptyText="No bookings in this month."
+        emptyText={
+          isRevenue ? "No revenue in this month." : "No bookings in this month."
+        }
       >
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={rows} margin={{ top: 10, right: 10, left: 0, bottom: 50 }}>
@@ -126,9 +136,17 @@ const TopBookingsByType = ({ typeKey, color }) => {
               tickFormatter={shortLabel}
               tick={{ fontSize: 10 }}
             />
-            <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v) => [v, "Bookings"]} />
-            <Bar dataKey="count" fill={color} radius={[4, 4, 0, 0]} />
+            <YAxis
+              allowDecimals={false}
+              tickFormatter={isRevenue ? (v) => `₹${v}` : undefined}
+              tick={{ fontSize: 11 }}
+            />
+            <Tooltip
+              formatter={(v) =>
+                isRevenue ? [`₹ ${v}`, "Revenue"] : [v, "Bookings"]
+              }
+            />
+            <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </Shell>
@@ -136,18 +154,21 @@ const TopBookingsByType = ({ typeKey, color }) => {
   );
 };
 
-// Distinct colours so the four type widgets are easy to tell apart.
+// Distinct colours so the widgets are easy to tell apart.
 export const GroupTopWidget = () => (
-  <TopBookingsByType typeKey="group" color="#4945FF" />
+  <TopByType typeKey="group" metric="bookings" color="#4945FF" />
+);
+export const GroupRevenueWidget = () => (
+  <TopByType typeKey="group" metric="revenue" color="#4945FF" />
 );
 export const PrivateTopWidget = () => (
-  <TopBookingsByType typeKey="private" color="#DB4D27" />
+  <TopByType typeKey="private" metric="bookings" color="#DB4D27" />
 );
 export const WalkTopWidget = () => (
-  <TopBookingsByType typeKey="walk" color="#328048" />
+  <TopByType typeKey="walk" metric="bookings" color="#328048" />
 );
-export const EventTopWidget = () => (
-  <TopBookingsByType typeKey="event" color="#9736E8" />
+export const WalkRevenueWidget = () => (
+  <TopByType typeKey="walk" metric="revenue" color="#328048" />
 );
 
 // All-website revenue per month (paid bookings across Group/Walk/Event).

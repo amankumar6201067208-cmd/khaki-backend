@@ -6,10 +6,12 @@
   "options": {},
   "attributes": {
     "People": {
-      "type": "biginteger"
+      "type": "biginteger",
+      "required": true
     },
     "Price": {
-      "type": "biginteger"
+      "type": "biginteger",
+      "required": true
     }
   },
   "config": {}

@@ -6,10 +6,12 @@
   "options": {},
   "attributes": {
     "Time": {
-      "type": "time"
+      "type": "time",
+      "required": true
     },
     "availableSeats": {
-      "type": "biginteger"
+      "type": "biginteger",
+      "required": true
     }
   },
   "config": {}

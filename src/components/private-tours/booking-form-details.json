@@ -7,6 +7,7 @@
   "attributes": {
     "TourDuraion": {
       "type": "decimal",
+      "required": true,
       "unique": false,
       "min": 0
     },

@@ -6,7 +6,8 @@
   "options": {},
   "attributes": {
     "Date": {
-      "type": "date"
+      "type": "date",
+      "required": true
     },
     "Slots": {
       "type": "component",

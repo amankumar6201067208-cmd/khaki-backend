@@ -1,4 +1,12 @@
-import { Download, Car, User, Walk, Store, ChartPie } from "@strapi/icons";
+import {
+  Download,
+  Car,
+  User,
+  Walk,
+  ChartPie,
+  ChartBubble,
+  ChartCircle,
+} from "@strapi/icons";
 import { ReportExportButton } from "./components/ReportExportButton";
 
 const PLUGIN_ID = "reports";
@@ -46,6 +54,19 @@ export default {
           import("./components/AnalyticsWidgets").then((m) => m.GroupTopWidget),
       },
       {
+        id: "group-top-revenue",
+        pluginId: PLUGIN_ID,
+        icon: ChartBubble,
+        title: {
+          id: `${PLUGIN_ID}.widget.groupRevenue`,
+          defaultMessage: "Group Tours — Top 5 by Revenue",
+        },
+        component: () =>
+          import("./components/AnalyticsWidgets").then(
+            (m) => m.GroupRevenueWidget,
+          ),
+      },
+      {
         id: "private-top-bookings",
         pluginId: PLUGIN_ID,
         icon: User,
@@ -68,15 +89,17 @@ export default {
           import("./components/AnalyticsWidgets").then((m) => m.WalkTopWidget),
       },
       {
-        id: "event-top-bookings",
+        id: "walk-top-revenue",
         pluginId: PLUGIN_ID,
-        icon: Store,
+        icon: ChartCircle,
         title: {
-          id: `${PLUGIN_ID}.widget.eventTop`,
-          defaultMessage: "Public Events — Top 5 by Bookings",
+          id: `${PLUGIN_ID}.widget.walkRevenue`,
+          defaultMessage: "Public Walks — Top 5 by Revenue",
         },
         component: () =>
-          import("./components/AnalyticsWidgets").then((m) => m.EventTopWidget),
+          import("./components/AnalyticsWidgets").then(
+            (m) => m.WalkRevenueWidget,
+          ),
       },
       {
         id: "website-revenue-monthly",

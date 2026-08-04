@@ -22,7 +22,7 @@
     },
     "Description": {
       "type": "blocks",
-      "required": false
+      "required": true
     },
     "TourType": {
       "type": "enumeration",
@@ -44,6 +44,7 @@
           ]
         }
       },
+      "required": true,
       "enum": [
         "Online",
         "Ofline"
@@ -66,7 +67,8 @@
       }
     },
     "Price": {
-      "type": "biginteger"
+      "type": "biginteger",
+      "required": true
     },
     "Highlights": {
       "type": "component",
@@ -86,6 +88,7 @@
     "FeatureImages": {
       "type": "media",
       "multiple": true,
+      "required": true,
       "allowedTypes": [
         "images",
         "files",

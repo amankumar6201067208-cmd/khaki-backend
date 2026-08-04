@@ -46,6 +46,14 @@ function top5Counts(map) {
     .slice(0, 5);
 }
 
+// Top 5 tours from a { tourName: revenue } map, shaped as {tour, revenue}.
+function top5Revenue(map) {
+  return Object.entries(map)
+    .map(([tour, revenue]) => ({ tour, revenue }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+}
+
 /**
  * Dashboard analytics for the admin homepage widgets.
  * - Per tour type: top 5 tours by booking count, broken down per month (latest 6).
@@ -53,7 +61,7 @@ function top5Counts(map) {
  * - All-website revenue per month (paid bookings only, across Group/Walk/Event).
  * @returns {Promise<{
  *   months: {key:string,label:string}[],
- *   byType: Record<string, Record<string, {tour:string,count:number}[]>>,
+ *   byType: Record<string, Record<string, {topByBookings:any[],topByRevenue:any[]}>>,
  *   revenueMonthly: {label:string,revenue:number}[]
  * }>}
  */
@@ -80,8 +88,8 @@ async function getAnalytics(strapi) {
   }
   const inWindow = new Set(monthKeys);
 
-  // --- Per-type: top 5 by bookings per month (+ feed all-website revenue) ---
-  /** @type {Record<string, Record<string, {tour:string,count:number}[]>>} */
+  // --- Per-type: top 5 by bookings & by revenue per month (+ all-website revenue) ---
+  /** @type {Record<string, Record<string, {topByBookings:any[],topByRevenue:any[]}>>} */
   const byType = {};
 
   for (const t of TYPES) {
@@ -92,9 +100,13 @@ async function getAnalytics(strapi) {
       "createdAt",
     ]);
 
-    // month key → { tourName → count }
+    // month key → { tourName → count } and { tourName → revenue }
     const countByMonth = {};
-    for (const key of monthKeys) countByMonth[key] = {};
+    const revByMonth = {};
+    for (const key of monthKeys) {
+      countByMonth[key] = {};
+      revByMonth[key] = {};
+    }
 
     for (const r of rows) {
       if (!r.createdAt) continue;
@@ -102,19 +114,24 @@ async function getAnalytics(strapi) {
       if (!inWindow.has(key)) continue;
 
       const title = r[t.titleField] || "Unknown";
+      const amount = Number(r.totalAmount || 0);
       countByMonth[key][title] = (countByMonth[key][title] || 0) + 1;
+      revByMonth[key][title] = (revByMonth[key][title] || 0) + amount;
 
       // All-website revenue: only paid types contribute actual collected money.
       if (t.paid) {
-        revenueMonthly[revIndexByKey.get(key)].revenue += Number(
-          r.totalAmount || 0
-        );
+        revenueMonthly[revIndexByKey.get(key)].revenue += amount;
       }
     }
 
-    /** @type {Record<string, {tour:string,count:number}[]>} */
+    /** @type {Record<string, {topByBookings:any[],topByRevenue:any[]}>} */
     const byMonth = {};
-    for (const key of monthKeys) byMonth[key] = top5Counts(countByMonth[key]);
+    for (const key of monthKeys) {
+      byMonth[key] = {
+        topByBookings: top5Counts(countByMonth[key]),
+        topByRevenue: top5Revenue(revByMonth[key]),
+      };
+    }
     byType[t.key] = byMonth;
   }
 

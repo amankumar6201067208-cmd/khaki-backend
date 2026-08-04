@@ -63,6 +63,7 @@ export interface PrivateToursBookingFormDetails extends Struct.ComponentSchema {
       true
     >;
     TourDuraion: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
@@ -89,8 +90,8 @@ export interface PrivateToursPersonPricing extends Struct.ComponentSchema {
     displayName: 'person pricing';
   };
   attributes: {
-    People: Schema.Attribute.BigInteger;
-    Price: Schema.Attribute.BigInteger;
+    People: Schema.Attribute.BigInteger & Schema.Attribute.Required;
+    Price: Schema.Attribute.BigInteger & Schema.Attribute.Required;
   };
 }
 
@@ -172,7 +173,7 @@ export interface TripSchedule extends Struct.ComponentSchema {
     displayName: 'schedule';
   };
   attributes: {
-    Date: Schema.Attribute.Date;
+    Date: Schema.Attribute.Date & Schema.Attribute.Required;
     Slots: Schema.Attribute.Component<'trip.slots', true>;
   };
 }
@@ -183,8 +184,8 @@ export interface TripSlots extends Struct.ComponentSchema {
     displayName: 'Slots';
   };
   attributes: {
-    availableSeats: Schema.Attribute.BigInteger;
-    Time: Schema.Attribute.Time;
+    availableSeats: Schema.Attribute.BigInteger & Schema.Attribute.Required;
+    Time: Schema.Attribute.Time & Schema.Attribute.Required;
   };
 }
 
@@ -196,7 +197,7 @@ export interface TripStartingPoint extends Struct.ComponentSchema {
   attributes: {
     location_address: Schema.Attribute.Text;
     location_name: Schema.Attribute.String;
-    title: Schema.Attribute.String;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 

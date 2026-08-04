@@ -27,13 +27,16 @@
       "type": "string"
     },
     "Price": {
-      "type": "biginteger"
+      "type": "biginteger",
+      "required": true
     },
     "priceType": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "Tag": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "tripCategory": {
       "type": "enumeration",
@@ -58,10 +61,12 @@
       ]
     },
     "publishDate": {
-      "type": "datetime"
+      "type": "datetime",
+      "required": true
     },
     "Description": {
-      "type": "blocks"
+      "type": "blocks",
+      "required": true
     },
     "Note": {
       "type": "blocks"
@@ -69,6 +74,7 @@
     "featureImage": {
       "type": "media",
       "multiple": false,
+      "required": true,
       "allowedTypes": [
         "images",
         "files",
@@ -79,6 +85,7 @@
     "Images": {
       "type": "media",
       "multiple": true,
+      "required": true,
       "allowedTypes": [
         "images",
         "files",
