@@ -792,7 +792,14 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    CutOffTime: Schema.Attribute.Integer;
+    CutOffTime: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
     Description: Schema.Attribute.Blocks;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
@@ -916,7 +923,14 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    CutOffTime: Schema.Attribute.Integer & Schema.Attribute.Required;
+    CutOffTime: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
     Description: Schema.Attribute.Blocks;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;

@@ -6,10 +6,12 @@
   "options": {},
   "attributes": {
     "StartTime": {
-      "type": "time"
+      "type": "time",
+      "required": true
     },
     "EndTime": {
-      "type": "time"
+      "type": "time",
+      "required": true
     }
   },
   "config": {}

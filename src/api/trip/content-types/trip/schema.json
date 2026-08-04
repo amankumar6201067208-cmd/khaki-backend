@@ -130,7 +130,8 @@
     },
     "CutOffTime": {
       "type": "integer",
-      "required": true
+      "required": true,
+      "min": 0
     }
   }
 }

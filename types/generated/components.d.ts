@@ -78,8 +78,8 @@ export interface PrivateToursBookingSlots extends Struct.ComponentSchema {
     displayName: 'Booking Slots';
   };
   attributes: {
-    EndTime: Schema.Attribute.Time;
-    StartTime: Schema.Attribute.Time;
+    EndTime: Schema.Attribute.Time & Schema.Attribute.Required;
+    StartTime: Schema.Attribute.Time & Schema.Attribute.Required;
   };
 }
 

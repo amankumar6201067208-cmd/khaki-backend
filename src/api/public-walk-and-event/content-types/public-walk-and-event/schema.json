@@ -109,7 +109,9 @@
       "type": "blocks"
     },
     "CutOffTime": {
-      "type": "integer"
+      "type": "integer",
+      "required": true,
+      "min": 0
     }
   }
 }

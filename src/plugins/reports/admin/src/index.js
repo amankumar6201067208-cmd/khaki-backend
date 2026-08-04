@@ -1,4 +1,4 @@
-import { Download, ChartPie, ChartBubble, Calendar } from "@strapi/icons";
+import { Download, Car, User, Walk, Store, ChartPie } from "@strapi/icons";
 import { ReportExportButton } from "./components/ReportExportButton";
 
 const PLUGIN_ID = "reports";
@@ -32,42 +32,63 @@ export default {
       });
 
     // Homepage dashboard chart widgets.
+    // Four per-type "Top 5 by bookings" (month-wise) + all-website monthly revenue.
     app.widgets.register([
       {
-        id: "top-tours-revenue",
+        id: "group-top-bookings",
+        pluginId: PLUGIN_ID,
+        icon: Car,
+        title: {
+          id: `${PLUGIN_ID}.widget.groupTop`,
+          defaultMessage: "Group Tours — Top 5 by Bookings",
+        },
+        component: () =>
+          import("./components/AnalyticsWidgets").then((m) => m.GroupTopWidget),
+      },
+      {
+        id: "private-top-bookings",
+        pluginId: PLUGIN_ID,
+        icon: User,
+        title: {
+          id: `${PLUGIN_ID}.widget.privateTop`,
+          defaultMessage: "Private Tours — Top 5 by Requests",
+        },
+        component: () =>
+          import("./components/AnalyticsWidgets").then((m) => m.PrivateTopWidget),
+      },
+      {
+        id: "walk-top-bookings",
+        pluginId: PLUGIN_ID,
+        icon: Walk,
+        title: {
+          id: `${PLUGIN_ID}.widget.walkTop`,
+          defaultMessage: "Public Walks — Top 5 by Bookings",
+        },
+        component: () =>
+          import("./components/AnalyticsWidgets").then((m) => m.WalkTopWidget),
+      },
+      {
+        id: "event-top-bookings",
+        pluginId: PLUGIN_ID,
+        icon: Store,
+        title: {
+          id: `${PLUGIN_ID}.widget.eventTop`,
+          defaultMessage: "Public Events — Top 5 by Bookings",
+        },
+        component: () =>
+          import("./components/AnalyticsWidgets").then((m) => m.EventTopWidget),
+      },
+      {
+        id: "website-revenue-monthly",
         pluginId: PLUGIN_ID,
         icon: ChartPie,
         title: {
-          id: `${PLUGIN_ID}.widget.topRevenue`,
-          defaultMessage: "Top 5 Tours by Revenue",
-        },
-        component: () =>
-          import("./components/AnalyticsWidgets").then((m) => m.TopRevenueWidget),
-      },
-      {
-        id: "top-tours-bookings",
-        pluginId: PLUGIN_ID,
-        icon: ChartBubble,
-        title: {
-          id: `${PLUGIN_ID}.widget.topBookings`,
-          defaultMessage: "Top 5 Tours by Bookings",
+          id: `${PLUGIN_ID}.widget.revenueMonthly`,
+          defaultMessage: "Website Revenue — Last 6 Months",
         },
         component: () =>
           import("./components/AnalyticsWidgets").then(
-            (m) => m.TopBookingsWidget,
-          ),
-      },
-      {
-        id: "monthly-bookings",
-        pluginId: PLUGIN_ID,
-        icon: Calendar,
-        title: {
-          id: `${PLUGIN_ID}.widget.monthly`,
-          defaultMessage: "Bookings — Last 6 Months",
-        },
-        component: () =>
-          import("./components/AnalyticsWidgets").then(
-            (m) => m.MonthlyBookingsWidget,
+            (m) => m.RevenueMonthlyWidget,
           ),
       },
     ]);
