@@ -1,6 +1,6 @@
 "use strict";
 
-const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
+const { normalizeTime } = require("./timeUtils");
 
 const MAX_DISCOUNT_PER_SLOT = 3;
 const DISCOUNT_PERCENT = 25;

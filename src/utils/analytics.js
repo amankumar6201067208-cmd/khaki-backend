@@ -1,7 +1,4 @@
 "use strict";
-
-// Each tour type: content-type uid, the field holding the tour name, and whether
-// it has a paid status (private tours are enquiry requests — no payment/status).
 const TYPES = [
   { key: "group",   uid: "api::booking.booking",                           titleField: "tourTitle", paid: true },
   { key: "walk",    uid: "api::public-walk-booking.public-walk-booking",    titleField: "tourTitle", paid: true },
@@ -9,8 +6,6 @@ const TYPES = [
   { key: "private", uid: "api::private-tour-booking.private-tour-booking",   titleField: "tourName",  paid: false },
 ];
 
-// Cache the computed result briefly. The homepage widgets each request this and
-// admins reload often — so at most one DB pass runs per CACHE_TTL_MS.
 /** @type {{ data: any, at: number }} */
 let _cache = { data: null, at: 0 };
 const CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
@@ -55,10 +50,6 @@ function top5Revenue(map) {
 }
 
 /**
- * Dashboard analytics for the admin homepage widgets.
- * - Per tour type: top 5 tours by booking count, broken down per month (latest 6).
- *   Group/Walk/Event count only PAID bookings; Private counts all requests.
- * - All-website revenue per month (paid bookings only, across Group/Walk/Event).
  * @returns {Promise<{
  *   months: {key:string,label:string}[],
  *   byType: Record<string, Record<string, {topByBookings:any[],topByRevenue:any[]}>>,

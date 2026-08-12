@@ -7,7 +7,7 @@ const KHAKI_LAB_LOCATION_PIN =
 
 // OFFLINE public event = an EVENT. Registration confirmation with venue details.
 module.exports = (data = {}) => {
-  const eventName = data.tourTitle || data.tourSlug || "the event";
+  const eventName = `#${data.tourTitle}` || data.tourSlug || "the event";
   const date = data.date || "";
   const time = data.slot || "";
   const venue = KHAKI_LAB_VENUE;

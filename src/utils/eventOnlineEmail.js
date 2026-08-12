@@ -7,7 +7,7 @@ const ZOOM_MEETING_ID = process.env.EVENT_ZOOM_MEETING_ID || "776 712 7489";
 const ZOOM_PASSCODE = process.env.EVENT_ZOOM_PASSCODE || "6b9bva";
 
 module.exports = (data = {}) => {
-  const eventName = data.tourTitle || data.tourSlug || "the event";
+  const eventName = `#${data.tourTitle}` || data.tourSlug || "the event";
   const date = data.date || "";
   const time = data.slot || "";
 

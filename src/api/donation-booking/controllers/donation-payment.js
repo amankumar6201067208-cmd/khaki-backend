@@ -118,10 +118,19 @@ module.exports = {
     const donationId = udf1;
     const frontendUrl = process.env.FRONTEND_URL;
 
-    await strapi.db.query("api::donation-booking.donation-booking").update({
-      where: { donationId },
-      data: { paymentStatus: "failed" },
-    });
+    try {
+      await strapi.db
+        .query("api::donation-booking.donation-booking")
+        .updateMany({
+          where: { donationId, paymentStatus: { $ne: "paid" } },
+          data: { paymentStatus: "failed" },
+        });
+    } catch (err) {
+      strapi.log.error(
+       // @ts-ignore
+        `[donation-payment.failure] update failed for ${donationId}: ${err.message}`,
+      );
+    }
 
     return ctx.redirect(
       `${frontendUrl}/thank-you?donationId=${donationId}&status=failed`,

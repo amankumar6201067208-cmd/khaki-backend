@@ -1,6 +1,7 @@
 "use strict";
 
 const { calcWalkAmount } = require("../../../utils/pricing");
+const { confirmBookingOnce, WALK } = require("../../../utils/confirmBooking");
 
 module.exports = {
   async create(ctx) {
@@ -8,10 +9,9 @@ module.exports = {
       const data = ctx.request.body;
 
       const bookingId = "PWB" + Date.now();
-      
+
       const passengers = Array.isArray(data.passengers) ? data.passengers : [];
       const tickets = passengers.length || Number(data.tickets) || 1;
-
 
       const { totalAmount } = await calcWalkAmount(strapi, {
         tourSlug: data.tourSlug,
@@ -38,17 +38,22 @@ module.exports = {
             contactEmail: data.contact.email,
             contactPhone: data.contact.phone,
             CountryCode: data.contact.countryCode,
-
             passengers,
-
-            Bookingstatus: isFree ? "confirmed" : "pending",
+            // Free (₹0) bookings are fully paid → confirm right away.
+            Bookingstatus: isFree ? "paid" : "pending",
           },
-        }
+        },
       );
 
-      // FREE EVENT → direct confirm + seat reduce
       if (isFree) {
-        console.log("FREE BOOKING CONFIRMED");
+        try {
+          await confirmBookingOnce(strapi, WALK, booking.bookingId, {});
+        } catch (err) {
+          strapi.log.error(
+            // @ts-ignore
+            `[public-walk-booking] free-confirm failed for ${booking.bookingId}: ${err.message}`,
+          );
+        }
       }
 
       ctx.send({
@@ -56,9 +61,10 @@ module.exports = {
         amount: booking.totalAmount,
         isFree,
       });
-
     } catch (error) {
-      ctx.throw(500, error);
+      // @ts-ignore
+      strapi.log.error(`[public-walk-booking.create] ${error.message}`);
+      ctx.throw(500, "Booking failed");
     }
   },
 
@@ -77,7 +83,8 @@ module.exports = {
 
       return ctx.send({ totalAmount, remainingDiscountQuota });
     } catch (error) {
-      console.error("=== CALCULATE ERROR ===", error);
+      // @ts-ignore
+      strapi.log.error(`[public-walk-booking.calculate] ${error.message}`);
       ctx.throw(500, "Calculation failed");
     }
   },

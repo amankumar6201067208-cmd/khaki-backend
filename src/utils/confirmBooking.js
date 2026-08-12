@@ -4,8 +4,7 @@ const userEmail = require("./eventUserEmail");
 const { runWithLock } = require("./asyncLock");
 const { sendMail } = require("./mailer");
 const { sendEventConfirmation } = require("./sendEventConfirmation");
-
-const normalizeTime = (t) => (t ? t.substring(0, 5) : "");
+const { normalizeTime } = require("./timeUtils");
 
 const BOOKING = "api::booking.booking";
 const EVENT = "api::public-event-booking.public-event-booking";
@@ -267,15 +266,13 @@ async function reduceWalkSeats(strapi, walkBooking) {
     .publish({ documentId: activity.documentId });
 }
 
-// EMAIL — pick the right template per booking type
 
 async function sendConfirmationEmail(strapi, uid, record, txnid) {
   if (uid === EVENT) {
-    // Online (talk) vs Offline (event) template chosen inside.
+
     await sendEventConfirmation(strapi, record);
     return;
   }
-  // Group tour + Public walk share the khakitours confirmation template.
   await sendMail("khakitours", {
     to: record.contactEmail,
     subject: `Booking Confirmed for ${record.tourTitle}`,
@@ -360,8 +357,6 @@ async function confirmBookingOnce(strapi, uid, bookingId, opts = {}) {
 }
 
 /**
- * Find a booking by its bookingId across the three booking types.
- * Used by the payment controllers to read the authoritative stored amount.
  * @returns {Promise<{ uid: string, record: object } | null>}
  */
 async function findBooking(strapi, bookingId) {
@@ -373,12 +368,32 @@ async function findBooking(strapi, bookingId) {
   return null;
 }
 
+/**
+ * @param {string} uid   booking content-type uid
+ * @param {string} label short label used in log lines
+ */
+function makeConfirmOnPaidHook(uid, label) {
+  return {
+    async afterUpdate(event) {
+      const { result } = event;
+      if (result?.Bookingstatus !== "paid") return;
+      try {
+        await confirmBookingOnce(strapi, uid, result.bookingId, {});
+      } catch (err) {
+        strapi.log.error(
+          // @ts-ignore
+          `[${label}.afterUpdate] confirm failed for ${result?.bookingId}: ${err.message}`,
+        );
+      }
+    },
+  };
+}
+
 module.exports = {
   confirmBookingOnce,
   findBooking,
-  reduceGroupTourSeats,
   reducePublicSeats,
-  reduceWalkSeats,
+  makeConfirmOnPaidHook,
   BOOKING,
   EVENT,
   WALK,

@@ -5,7 +5,7 @@ module.exports = (data) => {
       <p>Dear ${data.contactName},</p>
 
       <p>
-        Your payment for booking <b>${data.tourTitle}</b> tour/walk on 
+        Your payment for booking <b>#${data.tourTitle}</b> tour/walk on 
         <b>${data.date}</b> at <b>${data.slot}</b> has been received.
       </p>
 

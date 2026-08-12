@@ -17,22 +17,46 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// Long tour names → short X-axis ticks (full name still shows in the tooltip).
 const shortLabel = (v) => {
   const s = String(v ?? "");
   return s.length > 10 ? `${s.slice(0, 10)}…` : s;
 };
 
-// Shared fetch of /reports/analytics (each widget calls it; endpoint is cached).
+const CLIENT_TTL_MS = 60 * 1000;
+let _cache = { data: null, at: 0 };
+let _promise = null;
+
+const loadAnalytics = (get) => {
+  const fresh = _cache.data && Date.now() - _cache.at < CLIENT_TTL_MS;
+  if (fresh) return Promise.resolve(_cache.data);
+  if (_promise) return _promise;
+  _promise = get("/reports/analytics")
+    .then((res) => {
+      _cache = { data: res.data, at: Date.now() };
+      _promise = null;
+      return res.data;
+    })
+    .catch((err) => {
+      _promise = null; // allow a retry on the next mount
+      throw err;
+    });
+  return _promise;
+};
+
 const useAnalytics = () => {
   const { get } = useFetchClient();
-  const [state, setState] = useState({ data: null, loading: true, error: false });
+  const [state, setState] = useState(() => {
+    const fresh = _cache.data && Date.now() - _cache.at < CLIENT_TTL_MS;
+    return fresh
+      ? { data: _cache.data, loading: false, error: false }
+      : { data: null, loading: true, error: false };
+  });
 
   useEffect(() => {
     let cancelled = false;
-    get("/reports/analytics")
-      .then((res) => {
-        if (!cancelled) setState({ data: res.data, loading: false, error: false });
+    loadAnalytics(get)
+      .then((data) => {
+        if (!cancelled) setState({ data, loading: false, error: false });
       })
       .catch(() => {
         if (!cancelled) setState({ data: null, loading: false, error: true });
@@ -88,8 +112,6 @@ const MonthPicker = ({ months, activeKey, onChange, disabled }) => (
   </Flex>
 );
 
-// Per-type "Top 5 tours" with a month dropdown.
-// `metric` = "bookings" | "revenue"; reads data.byType[typeKey][monthKey].
 const TopByType = ({ typeKey, metric, color }) => {
   const { data, loading, error } = useAnalytics();
   const months = data?.months || [];
@@ -171,7 +193,6 @@ export const WalkRevenueWidget = () => (
   <TopByType typeKey="walk" metric="revenue" color="#328048" />
 );
 
-// All-website revenue per month (paid bookings across Group/Walk/Event).
 export const RevenueMonthlyWidget = () => {
   const { data, loading, error } = useAnalytics();
   const rows = data?.revenueMonthly || [];
