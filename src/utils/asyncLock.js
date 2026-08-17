@@ -9,7 +9,6 @@ const locks = new Map();
  * @returns {Promise<T>}
  */
 async function runWithLock(key, task) {
-  // Chain this task onto whatever is currently queued for this key.
   const previous = locks.get(key) || Promise.resolve();
 
   let release;
@@ -17,7 +16,6 @@ async function runWithLock(key, task) {
     release = resolve;
   });
 
-  // The new tail of the queue is "previous finished, then this one finishes".
   locks.set(
     key,
     previous.then(() => current),
@@ -31,7 +29,6 @@ async function runWithLock(key, task) {
   } finally {
     // @ts-ignore
     release();
-    // Clean up the map if no one else queued behind us.
     if (locks.get(key) === previous.then(() => current)) {
     }
     Promise.resolve().then(() => {

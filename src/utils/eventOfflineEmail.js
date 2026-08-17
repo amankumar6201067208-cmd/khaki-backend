@@ -5,7 +5,6 @@ const KHAKI_LAB_VENUE =
 const KHAKI_LAB_LOCATION_PIN =
   "https://maps.app.goo.gl/NMJFzMbzRU14RyBm9?g_st=iw";
 
-// OFFLINE public event = an EVENT. Registration confirmation with venue details.
 module.exports = (data = {}) => {
   const eventName = `#${data.tourTitle}` || data.tourSlug || "the event";
   const date = data.date || "";
@@ -18,7 +17,6 @@ module.exports = (data = {}) => {
     "Your registration details are as follows:",
   ];
 
-  // Venue + location pin sit just above the outro (after the details table).
   const venueLines = [];
   if (venue) venueLines.push(`<strong>Venue:</strong> ${esc(venue)}`);
   if (locationPin) {

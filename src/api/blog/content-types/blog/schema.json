@@ -45,6 +45,11 @@
         "blogs.paragraph",
         "blogs.image"
       ]
+    },
+    "MetaData": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
     }
   }
 }

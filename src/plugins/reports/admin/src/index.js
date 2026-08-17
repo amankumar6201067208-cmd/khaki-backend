@@ -39,8 +39,6 @@ export default {
         Component: ReportExportButton,
       });
 
-    // Homepage dashboard chart widgets.
-    // Four per-type "Top 5 by bookings" (month-wise) + all-website monthly revenue.
     app.widgets.register([
       {
         id: "group-top-bookings",

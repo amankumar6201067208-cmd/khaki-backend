@@ -1,0 +1,50 @@
+{
+  "kind": "singleType",
+  "collectionName": "khaki_tours_seos",
+  "info": {
+    "singularName": "khaki-tours-seo",
+    "pluralName": "khaki-tours-seos",
+    "displayName": "Khaki Tours SEO "
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "HomePage": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    },
+    "AboutUs": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    },
+    "WalkTours": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    },
+    "Foundation": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    },
+    "KhakiLab": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    },
+    "Blogs": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    },
+    "Contact": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
+    }
+  }
+}

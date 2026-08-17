@@ -1,8 +1,5 @@
 module.exports = ({ env }) => ({
 
-  // Images are stored on the local disk (public/uploads) — the Strapi default
-  // local provider. Cloudinary has been removed. `sizeLimit` is generous for
-  // large tour photos.
   upload: {
     config: {
       sizeLimit: 50 * 1024 * 1024, // 50 MB

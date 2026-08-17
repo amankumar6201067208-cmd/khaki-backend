@@ -139,6 +139,11 @@
       "type": "integer",
       "required": true,
       "min": 0
+    },
+    "MetaData": {
+      "type": "component",
+      "component": "shared.seo",
+      "repeatable": false
     }
   }
 }

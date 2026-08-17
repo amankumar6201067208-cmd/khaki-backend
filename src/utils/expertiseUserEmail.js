@@ -1,6 +1,5 @@
 const { buildEmail } = require("./emailBase");
 
-// Provide-Expertise confirmation (sent from khakilabevents@gmail.com).
 module.exports = (data = {}) =>
   buildEmail({
     greeting: `Dear ${data.name || ""}`.trim(),

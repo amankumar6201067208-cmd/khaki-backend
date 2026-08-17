@@ -55,7 +55,6 @@ module.exports = ({ strapi }) => ({
     }
   },
 
-  // Dashboard analytics for the admin homepage chart widgets.
   async analytics(ctx) {
     try {
       ctx.body = await getAnalytics(strapi);

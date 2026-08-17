@@ -14,7 +14,6 @@ async function fetchAll(strapi, uid, filters, fields) {
   const out = [];
   const pageSize = 1000;
   let start = 0;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const batch = await strapi.documents(uid).findMany({
       filters,

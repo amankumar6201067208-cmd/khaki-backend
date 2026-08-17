@@ -453,6 +453,7 @@ export interface ApiBlogBlog extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::blog.blog'> &
       Schema.Attribute.Private;
+    MetaData: Schema.Attribute.Component<'shared.seo', false>;
     publishDate: Schema.Attribute.Date & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
@@ -647,6 +648,40 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiKhakiToursSeoKhakiToursSeo extends Struct.SingleTypeSchema {
+  collectionName: 'khaki_tours_seos';
+  info: {
+    displayName: 'Khaki Tours SEO ';
+    pluralName: 'khaki-tours-seos';
+    singularName: 'khaki-tours-seo';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    AboutUs: Schema.Attribute.Component<'shared.seo', false>;
+    Blogs: Schema.Attribute.Component<'shared.seo', false>;
+    Contact: Schema.Attribute.Component<'shared.seo', false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Foundation: Schema.Attribute.Component<'shared.seo', false>;
+    HomePage: Schema.Attribute.Component<'shared.seo', false>;
+    KhakiLab: Schema.Attribute.Component<'shared.seo', false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::khaki-tours-seo.khaki-tours-seo'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    WalkTours: Schema.Attribute.Component<'shared.seo', false>;
+  };
+}
+
 export interface ApiPrivateTourBookingPrivateTourBooking
   extends Struct.CollectionTypeSchema {
   collectionName: 'private_tour_bookings';
@@ -817,6 +852,7 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
       'api::public-walk-and-event.public-walk-and-event'
     > &
       Schema.Attribute.Private;
+    MetaData: Schema.Attribute.Component<'shared.seo', false>;
     Note: Schema.Attribute.Blocks;
     Price: Schema.Attribute.BigInteger & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
@@ -950,6 +986,7 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::trip.trip'> &
       Schema.Attribute.Private;
+    MetaData: Schema.Attribute.Component<'shared.seo', false>;
     Note: Schema.Attribute.Blocks;
     Price: Schema.Attribute.BigInteger & Schema.Attribute.Required;
     priceType: Schema.Attribute.String & Schema.Attribute.Required;
@@ -1571,6 +1608,7 @@ declare module '@strapi/strapi' {
       'api::contact-us-enquiry.contact-us-enquiry': ApiContactUsEnquiryContactUsEnquiry;
       'api::donation-booking.donation-booking': ApiDonationBookingDonationBooking;
       'api::home-page.home-page': ApiHomePageHomePage;
+      'api::khaki-tours-seo.khaki-tours-seo': ApiKhakiToursSeoKhakiToursSeo;
       'api::private-tour-booking.private-tour-booking': ApiPrivateTourBookingPrivateTourBooking;
       'api::provide-expertise-form-enquiry.provide-expertise-form-enquiry': ApiProvideExpertiseFormEnquiryProvideExpertiseFormEnquiry;
       'api::public-event-booking.public-event-booking': ApiPublicEventBookingPublicEventBooking;
