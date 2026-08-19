@@ -845,6 +845,8 @@ export interface ApiPublicWalkAndEventPublicWalkAndEvent
       true
     > &
       Schema.Attribute.Required;
+    hideFromListing: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     Highlights: Schema.Attribute.Component<'trip.highlight', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -977,6 +979,8 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Required;
     GroupTourBookingDetails: Schema.Attribute.DynamicZone<['trip.schedule']>;
+    hideFromListing: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     highlight: Schema.Attribute.Component<'trip.highlight', true>;
     Images: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',

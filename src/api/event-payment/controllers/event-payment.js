@@ -87,7 +87,7 @@ module.exports = {
 
       if (!eventBooking) {
         return ctx.redirect(
-          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}`,
+          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid`,
         );
       }
 
@@ -99,8 +99,9 @@ module.exports = {
         await confirmBookingOnce(strapi, EVENT, bookingId, { txnid });
       }
 
+      // Per-tour success path (/thank-you/<slug>) for Meta conversion tracking.
       return ctx.redirect(
-        `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}&tourSlug=${eventBooking.tourSlug}`,
+        `${frontendUrl}/thank-you/${eventBooking.tourSlug}?bookingId=${bookingId}&status=paid`,
       );
     } catch (error) {
       console.error("=== EVENT PAYMENT SUCCESS ERROR ===", error);

@@ -80,11 +80,13 @@ module.exports = {
         return ctx.redirect(`${frontendUrl}/failed?error=hash_mismatch`);
       }
 
+      // Success lands on a per-tour path (/thank-you/<slug>) so Meta can track
+      // it as a conversion; failures stay on the bare /thank-you path.
       const thankYou = (slug) =>
         ctx.redirect(
-          `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid&txnid=${txnid}${
-            slug ? `&tourSlug=${slug}` : ""
-          }`,
+          slug
+            ? `${frontendUrl}/thank-you/${slug}?bookingId=${bookingId}&status=paid`
+            : `${frontendUrl}/thank-you?bookingId=${bookingId}&status=paid`,
         );
 
       //  GROUP TOUR BOOKING

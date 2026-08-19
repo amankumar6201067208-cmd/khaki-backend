@@ -11,6 +11,10 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "hideFromListing": {
+      "type": "boolean",
+      "default": false
+    },
     "Title": {
       "type": "string",
       "required": true

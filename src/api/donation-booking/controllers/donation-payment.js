@@ -75,7 +75,7 @@ module.exports = {
 
       if (!donation) {
         return ctx.redirect(
-          `${frontendUrl}/thank-you?donationId=${donationId}&status=paid&txnid=${txnid}`,
+          `${frontendUrl}/thank-you/donation?donationId=${donationId}&status=paid`,
         );
       }
 
@@ -88,7 +88,7 @@ module.exports = {
 
       if (count === 0) {
         return ctx.redirect(
-          `${frontendUrl}/thank-you?donationId=${donationId}&status=paid&txnid=${txnid}`,
+          `${frontendUrl}/thank-you/donation?donationId=${donationId}&status=paid`,
         );
       }
 
@@ -105,7 +105,7 @@ module.exports = {
       }
 
       return ctx.redirect(
-        `${frontendUrl}/thank-you?donationId=${donationId}&status=paid&txnid=${txnid}`,
+        `${frontendUrl}/thank-you/donation?donationId=${donationId}&status=paid`,
       );
     } catch (err) {
       console.error("Donation Success Error:", err);
