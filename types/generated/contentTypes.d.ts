@@ -974,6 +974,7 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     Description: Schema.Attribute.Blocks & Schema.Attribute.Required;
     Distance: Schema.Attribute.String;
     Duration: Schema.Attribute.String;
+    EndDate: Schema.Attribute.Date & Schema.Attribute.Required;
     featureImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     > &
@@ -997,6 +998,7 @@ export interface ApiTripTrip extends Struct.CollectionTypeSchema {
     publishDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.UID<'Title'> & Schema.Attribute.Required;
+    StartDate: Schema.Attribute.Date & Schema.Attribute.Required;
     startingPoint: Schema.Attribute.Component<'trip.starting-point', false>;
     Tag: Schema.Attribute.String & Schema.Attribute.Required;
     Title: Schema.Attribute.String & Schema.Attribute.Required;

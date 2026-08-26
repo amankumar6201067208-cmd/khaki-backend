@@ -148,6 +148,34 @@
       "type": "component",
       "component": "shared.seo",
       "repeatable": false
+    },
+    "StartDate": {
+      "type": "date",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "tripType"
+            },
+            "Private Tour"
+          ]
+        }
+      },
+      "required": true
+    },
+    "EndDate": {
+      "type": "date",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "tripType"
+            },
+            "Private Tour"
+          ]
+        }
+      },
+      "required": true
     }
   }
 }
