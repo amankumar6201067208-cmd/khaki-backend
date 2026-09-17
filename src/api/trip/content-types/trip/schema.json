@@ -161,7 +161,7 @@
           ]
         }
       },
-      "required": true
+      "required": false
     },
     "EndDate": {
       "type": "date",
@@ -175,7 +175,7 @@
           ]
         }
       },
-      "required": true
+      "required": false
     }
   }
 }
